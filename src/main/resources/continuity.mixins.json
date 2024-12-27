@@ -8,6 +8,7 @@
     "BakedModelManagerMixin",
     "BlockModelsMixin",
     "FallingBlockEntityRendererMixin",
+    "LayerRenderStateMixin",
     "LifecycledResourceManagerImplMixin",
     "PistonBlockEntityRendererMixin",
     "RenderLayersMixin",

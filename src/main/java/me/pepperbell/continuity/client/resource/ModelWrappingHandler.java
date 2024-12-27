@@ -2,7 +2,6 @@ package me.pepperbell.continuity.client.resource;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -51,7 +50,7 @@ public class ModelWrappingHandler {
 
 	private static ImmutableMap<ModelIdentifier, BlockState> createBlockStateModelIdMap() {
 		ImmutableMap.Builder<ModelIdentifier, BlockState> builder = ImmutableMap.builder();
-		// Match code of BakedModelManager#bake
+		// Match code of BakedModelManager#toStateMap
 		for (Block block : Registries.BLOCK) {
 			Identifier blockId = block.getRegistryEntry().registryKey().getValue();
 			for (BlockState state : block.getStateManager().getStates()) {
@@ -62,19 +61,31 @@ public class ModelWrappingHandler {
 		return builder.build();
 	}
 
-	public BakedModel wrap(@Nullable BakedModel model, @UnknownNullability Identifier resourceId, @UnknownNullability ModelIdentifier topLevelId) {
-		if (model != null && !model.isBuiltin() && (resourceId == null || !resourceId.equals(MissingModel.ID))) {
-			if (wrapCtm) {
-				if (topLevelId != null) {
-					BlockState state = blockStateModelIds.get(topLevelId);
-					if (state != null) {
-						model = new CtmBakedModel(model, state);
-					}
-				}
-			}
+	public BakedModel wrap(BakedModel model, Identifier id) {
+		if (!id.equals(MissingModel.ID)) {
 			if (wrapEmissive) {
 				model = new EmissiveBakedModel(model);
 			}
+		}
+		return model;
+	}
+
+	public BakedModel wrapBlock(BakedModel model, ModelIdentifier topLevelId) {
+		if (wrapCtm) {
+			BlockState state = blockStateModelIds.get(topLevelId);
+			if (state != null) {
+				model = new CtmBakedModel(model, state);
+			}
+		}
+		if (wrapEmissive) {
+			model = new EmissiveBakedModel(model);
+		}
+		return model;
+	}
+
+	public BakedModel ensureWrapped(BakedModel model) {
+		if (wrapEmissive && !(model instanceof EmissiveBakedModel)) {
+			return new EmissiveBakedModel(model);
 		}
 		return model;
 	}
@@ -85,7 +96,14 @@ public class ModelWrappingHandler {
 			pluginCtx.modifyModelAfterBake().register(ModelModifier.WRAP_LAST_PHASE, (model, ctx) -> {
 				ModelWrappingHandler wrappingHandler = getInstance();
 				if (wrappingHandler != null) {
-					return wrappingHandler.wrap(model, ctx.resourceId(), ctx.topLevelId());
+					return wrappingHandler.wrap(model, ctx.id());
+				}
+				return model;
+			});
+			pluginCtx.modifyBlockModelAfterBake().register(ModelModifier.WRAP_LAST_PHASE, (model, ctx) -> {
+				ModelWrappingHandler wrappingHandler = getInstance();
+				if (wrappingHandler != null) {
+					return wrappingHandler.wrapBlock(model, ctx.id());
 				}
 				return model;
 			});

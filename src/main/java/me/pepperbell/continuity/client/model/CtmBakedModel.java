@@ -1,50 +1,54 @@
 package me.pepperbell.continuity.client.model;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.config.ContinuityConfig;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.impl.client.ProcessingContextImpl;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.WrapperBakedModel;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 
-public class CtmBakedModel extends ForwardingBakedModel {
+public class CtmBakedModel extends WrapperBakedModel {
 	public static final int PASSES = 4;
 
 	protected final BlockState defaultState;
 	protected volatile Function<Sprite, QuadProcessors.Slice> defaultSliceFunc;
 
 	public CtmBakedModel(BakedModel wrapped, BlockState defaultState) {
-		this.wrapped = wrapped;
+		super(wrapped);
 		this.defaultState = defaultState;
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(QuadEmitter emitter, BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, Predicate<@Nullable Direction> cullTest) {
 		if (!ContinuityConfig.INSTANCE.connectedTextures.get()) {
-			super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+			super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
 			return;
 		}
 
 		ModelObjectsContainer container = ModelObjectsContainer.get();
 		if (!container.featureStates.getConnectedTexturesState().isEnabled()) {
-			super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+			super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
 			return;
 		}
 
 		CtmQuadTransform quadTransform = container.ctmQuadTransform;
 		if (quadTransform.isActive()) {
-			super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+			super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
 			return;
 		}
 
@@ -65,13 +69,13 @@ public class CtmBakedModel extends ForwardingBakedModel {
 		// especially if there is an actual use case for it.
 		BlockState appearanceState = state.getAppearance(blockView, pos, Direction.DOWN, state, pos);
 
-		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier, context, ContinuityConfig.INSTANCE.useManualCulling.get(), getSliceFunc(appearanceState));
+		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier, cullTest, getSliceFunc(appearanceState));
 
-		context.pushTransform(quadTransform);
-		super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
-		context.popTransform();
+		emitter.pushTransform(quadTransform);
+		super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+		emitter.popTransform();
 
-		quadTransform.processingContext.outputTo(context.getEmitter());
+		quadTransform.processingContext.outputTo(emitter);
 		quadTransform.reset();
 	}
 
@@ -100,7 +104,7 @@ public class CtmBakedModel extends ForwardingBakedModel {
 		return QuadProcessors.getCache(state);
 	}
 
-	protected static class CtmQuadTransform implements RenderContext.QuadTransform {
+	protected static class CtmQuadTransform implements QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
 
 		protected BlockRenderView blockView;
@@ -108,15 +112,14 @@ public class CtmBakedModel extends ForwardingBakedModel {
 		protected BlockState state;
 		protected BlockPos pos;
 		protected Supplier<Random> randomSupplier;
-		protected RenderContext renderContext;
-		protected boolean useManualCulling;
+		protected Predicate<@Nullable Direction> cullTest;
 		protected Function<Sprite, QuadProcessors.Slice> sliceFunc;
 
 		protected boolean active;
 
 		@Override
 		public boolean transform(MutableQuadView quad) {
-			if (useManualCulling && renderContext.isFaceCulled(quad.cullFace())) {
+			if (cullTest.test(quad.cullFace())) {
 				return false;
 			}
 
@@ -156,19 +159,16 @@ public class CtmBakedModel extends ForwardingBakedModel {
 			return active;
 		}
 
-		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext renderContext, boolean useManualCulling, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
+		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, Predicate<@Nullable Direction> cullTest, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
 			this.blockView = blockView;
 			this.appearanceState = appearanceState;
 			this.state = state;
 			this.pos = pos;
 			this.randomSupplier = randomSupplier;
-			this.renderContext = renderContext;
-			this.useManualCulling = useManualCulling;
+			this.cullTest = cullTest;
 			this.sliceFunc = sliceFunc;
 
 			active = true;
-
-			processingContext.prepare();
 		}
 
 		public void reset() {
@@ -177,8 +177,7 @@ public class CtmBakedModel extends ForwardingBakedModel {
 			state = null;
 			pos = null;
 			randomSupplier = null;
-			renderContext = null;
-			useManualCulling = false;
+			cullTest = null;
 			sliceFunc = null;
 
 			active = false;

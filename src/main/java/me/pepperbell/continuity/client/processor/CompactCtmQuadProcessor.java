@@ -342,7 +342,6 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 				}
 			}
 
-			context.markHasExtraQuads();
 			return ProcessingResult.DISCARD;
 		} else if (uSplit | vSplit) {
 			boolean firstSplit;
@@ -421,7 +420,6 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 				splitHalf(quad, sprite, vertexContainer, 2, extraQuadEmitter, spriteIndexB);
 			}
 
-			context.markHasExtraQuads();
 			return ProcessingResult.DISCARD;
 		} else {
 			int quadrant;

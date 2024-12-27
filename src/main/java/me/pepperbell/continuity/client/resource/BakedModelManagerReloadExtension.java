@@ -17,7 +17,7 @@ import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 
-public class BakedModelManagerReloadExtension {
+public class BakedModelManagerReloadExtension implements BakedModelManagerBakeContext {
 	private final CompletableFuture<CtmPropertiesLoader.LoadingResult> ctmLoadingResultFuture;
 	private final AtomicBoolean wrapEmissiveModels = new AtomicBoolean();
 	private final SpriteLoaderLoadContextImpl spriteLoaderLoadContext;
@@ -38,7 +38,8 @@ public class BakedModelManagerReloadExtension {
 		SpriteLoaderLoadContext.THREAD_LOCAL.set(null);
 	}
 
-	public void beforeBaking(Map<Identifier, SpriteAtlasManager.AtlasPreparation> preparations) {
+	@Override
+	public void beforeBake(Map<Identifier, SpriteAtlasManager.AtlasPreparation> preparations) {
 		CtmPropertiesLoader.LoadingResult result = ctmLoadingResultFuture.join();
 
 		List<QuadProcessors.ProcessorHolder> processorHolders = result.createProcessorHolders(spriteId -> {

@@ -31,12 +31,12 @@
   ],
 
   "depends": {
-    "minecraft": "1.21.3",
+    "minecraft": ">=1.21.4",
     "fabricloader": ">=0.15.0",
-    "fabric-api": ">=0.100.1"
+    "fabric-api": ">=0.113.0"
   },
   "breaks": {
-    "sodium": "<0.6.2"
+    "sodium": "<0.6.6"
   },
 
   "custom": {

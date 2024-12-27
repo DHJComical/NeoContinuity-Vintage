@@ -1,14 +1,10 @@
 package me.pepperbell.continuity.client.processor.overlay;
 
-import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.pepperbell.continuity.api.client.QuadProcessor;
-import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.processor.ProcessingPredicate;
 import me.pepperbell.continuity.client.processor.simple.SimpleQuadProcessor;
 import me.pepperbell.continuity.client.processor.simple.SpriteProvider;
@@ -20,11 +16,9 @@ import me.pepperbell.continuity.client.util.TextureUtil;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 
@@ -46,49 +40,10 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 		if (processingPredicate.shouldProcessQuad(quad, sprite, blockView, appearanceState, state, pos, context)) {
 			Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, appearanceState, state, pos, randomSupplier, context);
 			if (newSprite != null && !TextureUtil.isMissingSprite(newSprite)) {
-				OverlayEmitter emitter = context.getData(ProcessingDataKeys.SIMPLE_OVERLAY_EMITTER_POOL).get();
-				emitter.prepare(quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), material);
-				context.addEmitterConsumer(emitter);
+				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), material);
 			}
 		}
 		return ProcessingResult.NEXT_PROCESSOR;
-	}
-
-	public static class OverlayEmitter implements Consumer<QuadEmitter> {
-		protected Direction face;
-		protected Sprite sprite;
-		protected int color;
-		protected RenderMaterial material;
-
-		@Override
-		public void accept(QuadEmitter emitter) {
-			QuadUtil.emitOverlayQuad(emitter, face, sprite, color, material);
-		}
-
-		public void prepare(Direction face, Sprite sprite, int color, RenderMaterial material) {
-			this.face = face;
-			this.sprite = sprite;
-			this.color = color;
-			this.material = material;
-		}
-	}
-
-	public static class OverlayEmitterPool {
-		protected final List<OverlayEmitter> list = new ObjectArrayList<>();
-		protected int nextIndex = 0;
-
-		public OverlayEmitter get() {
-			if (nextIndex >= list.size()) {
-				list.add(new OverlayEmitter());
-			}
-			OverlayEmitter emitter = list.get(nextIndex);
-			nextIndex++;
-			return emitter;
-		}
-
-		public void reset() {
-			nextIndex = 0;
-		}
 	}
 
 	public static class Factory<T extends BaseCtmProperties & OverlayPropertiesSection.Provider> extends SimpleQuadProcessor.Factory<T> {
