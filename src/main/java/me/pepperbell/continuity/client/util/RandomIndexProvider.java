@@ -16,7 +16,7 @@ public interface RandomIndexProvider {
 
 		@Override
 		public int getRandomIndex(int random) {
-			return Math.abs(random) % size;
+			return MathUtil.removeSignBit(random) % size;
 		}
 	}
 
@@ -43,7 +43,7 @@ public interface RandomIndexProvider {
 		@Override
 		public int getRandomIndex(int random) {
 			int index;
-			int tempWeight = Math.abs(random) % weightSum;
+			int tempWeight = MathUtil.removeSignBit(random) % weightSum;
 			for (index = 0; index < maxIndex && tempWeight >= weights[index]; index++) {
 				tempWeight -= weights[index];
 			}
