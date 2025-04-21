@@ -77,7 +77,7 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 				if (appearanceState == otherAppearanceState) {
 					return true;
 				}
-				return quadSprite == SpriteCalculator.getSprite(otherAppearanceState, face);
+				return SpriteCalculator.getSprites(otherAppearanceState, face).contains(quadSprite);
 			}
 		},
 		STATE {
