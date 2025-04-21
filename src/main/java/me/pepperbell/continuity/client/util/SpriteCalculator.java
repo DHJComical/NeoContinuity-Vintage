@@ -6,6 +6,7 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockModels;
@@ -19,10 +20,13 @@ public final class SpriteCalculator {
 	private static final BlockModels MODELS = MinecraftClient.getInstance().getBakedModelManager().getBlockModels();
 
 	private static final EnumMap<Direction, SpriteCache> SPRITE_CACHES = new EnumMap<>(Direction.class);
+
 	static {
 		for (Direction direction : Direction.values()) {
 			SPRITE_CACHES.put(direction, new SpriteCache(direction));
 		}
+
+		InvalidateRenderStateCallback.EVENT.register(SpriteCalculator::clearCache);
 	}
 
 	public static Sprite getSprite(BlockState state, Direction face) {

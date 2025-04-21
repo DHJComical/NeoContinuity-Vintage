@@ -635,7 +635,6 @@ public class BaseCtmProperties implements CtmProperties {
 			} else if (tile.equals(SPECIAL_DEFAULT_ID)) {
 				spriteId = SPECIAL_DEFAULT_SPRITE_ID;
 			} else {
-				String namespace = tile.getNamespace();
 				String path = tile.getPath();
 				if (path.startsWith("textures/")) {
 					path = path.substring(9);
@@ -643,12 +642,12 @@ public class BaseCtmProperties implements CtmProperties {
 						path = path.substring(0, path.length() - 4);
 					}
 
-					spriteId = TextureUtil.toSpriteId(new Identifier(namespace, path));
+					spriteId = TextureUtil.toSpriteId(tile.withPath(path));
 					textureDependencies.add(spriteId);
 				} else if (redirectHandler != null) {
 					path = redirectHandler.getSourceSpritePath(path);
 
-					spriteId = TextureUtil.toSpriteId(new Identifier(namespace, path));
+					spriteId = TextureUtil.toSpriteId(tile.withPath(path));
 					textureDependencies.add(spriteId);
 				} else {
 					spriteId = TextureUtil.MISSING_SPRITE_ID;
