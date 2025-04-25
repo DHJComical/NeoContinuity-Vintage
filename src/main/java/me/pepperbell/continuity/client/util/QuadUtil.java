@@ -24,7 +24,7 @@ public final class QuadUtil {
 		}
 	}
 
-	public static void assignLerpedUVs(MutableQuadView quad, Sprite sprite) {
+	public static void assignLerpedUvs(MutableQuadView quad, Sprite sprite) {
 		float delta = sprite.getAnimationFrameDelta();
 		float centerU = (sprite.getMinU() + sprite.getMaxU()) * 0.5f;
 		float centerV = (sprite.getMinV() + sprite.getMaxV()) * 0.5f;
@@ -41,7 +41,7 @@ public final class QuadUtil {
 	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, Sprite sprite, int color, RenderMaterial material) {
 		emitter.square(face, 0, 0, 1, 1, 0);
 		emitter.color(color, color, color, color);
-		assignLerpedUVs(emitter, sprite);
+		assignLerpedUvs(emitter, sprite);
 		emitter.material(material);
 		emitter.emit();
 	}
@@ -79,56 +79,96 @@ public final class QuadUtil {
 		return true;
 	}
 
+	/**
+	 * Returns an int in range [0, 7] representing the texture orientation of the given quad relative to the world.
+	 *
+	 * <ul>
+	 *     <li>0 - 0 degree counterclockwise rotation, counterclockwise UV winding order</li>
+	 *     <li>1 - 90 degree counterclockwise rotation, counterclockwise UV winding order</li>
+	 *     <li>2 - 180 degree counterclockwise rotation, counterclockwise UV winding order</li>
+	 *     <li>3 - 270 degree counterclockwise rotation, counterclockwise UV winding order</li>
+	 *     <li>4 - 0 degree counterclockwise rotation, clockwise UV winding order</li>
+	 *     <li>5 - 90 degree counterclockwise rotation, clockwise UV winding order</li>
+	 *     <li>6 - 180 degree counterclockwise rotation, clockwise UV winding order</li>
+	 *     <li>7 - 270 degree counterclockwise rotation, clockwise UV winding order</li>
+	 * </ul>
+	 */
 	public static int getTextureOrientation(QuadView quad) {
-		int rotation = getUVRotation(quad);
-		if (getUVWinding(quad) == Winding.CLOCKWISE) {
-			return rotation + 4;
+		// Texture matrix
+		float tm00 = quad.u(3) - quad.u(1);
+		float tm01 = quad.v(3) - quad.v(1);
+		float tm10 = quad.u(2) - quad.u(0);
+		float tm11 = quad.v(2) - quad.v(0);
+		// Determinant of texture matrix; also cross product of its column vectors
+		float determinant = tm00 * tm11 - tm10 * tm01;
+		if (determinant == 0) {
+			return 0;
 		}
-		return rotation;
-	}
+		float s = 1 / determinant;
+		// Second column of inverse texture matrix
+		float itm10 = -tm10 * s;
+		float itm11 = tm00 * s;
 
-	public static int getUVRotation(QuadView quad) {
-		int minVertex = 0;
-		float minDistance = 3.0f;
-		for (int vertexId = 0; vertexId < 4; vertexId++) {
-			float u = quad.u(vertexId);
-			float v = quad.v(vertexId);
-			float distance = u * u + v * v;
-			if (distance < minDistance) {
-				minDistance = distance;
-				minVertex = vertexId;
+		int xAxis;
+		int xAxisSign;
+		int yAxis;
+		int yAxisSign;
+		switch (quad.lightFace()) {
+			case DOWN -> {
+				xAxis = 0; // +X
+				xAxisSign = 1;
+				yAxis = 2; // +Z
+				yAxisSign = 1;
+			}
+			case UP -> {
+				xAxis = 0; // +X
+				xAxisSign = 1;
+				yAxis = 2; // -Z
+				yAxisSign = -1;
+			}
+			case NORTH -> {
+				xAxis = 0; // -X
+				xAxisSign = -1;
+				yAxis = 1; // +Y
+				yAxisSign = 1;
+			}
+			case SOUTH -> {
+				xAxis = 0; // +X
+				xAxisSign = 1;
+				yAxis = 1; // +Y
+				yAxisSign = 1;
+			}
+			case WEST -> {
+				xAxis = 2; // +Z
+				xAxisSign = 1;
+				yAxis = 1; // +Y
+				yAxisSign = 1;
+			}
+			case EAST -> {
+				xAxis = 2; // -Z
+				xAxisSign = -1;
+				yAxis = 1; // +Y
+				yAxisSign = 1;
+			}
+			default -> {
+				return 0;
 			}
 		}
-		return minVertex;
-	}
+		// Position matrix
+		float pm00 = quad.posByIndex(3, xAxis) - quad.posByIndex(1, xAxis);
+		float pm01 = quad.posByIndex(3, yAxis) - quad.posByIndex(1, yAxis);
+		float pm10 = quad.posByIndex(2, xAxis) - quad.posByIndex(0, xAxis);
+		float pm11 = quad.posByIndex(2, yAxis) - quad.posByIndex(0, yAxis);
 
-	public static Winding getUVWinding(QuadView quad) {
-		float u3 = quad.u(3);
-		float v3 = quad.v(3);
-		float u0 = quad.u(0);
-		float v0 = quad.v(0);
-		float u1 = quad.u(1);
-		float v1 = quad.v(1);
+		// Texture up vector in projected world space
+		// Computed as (position matrix * inverse texture matrix * [0; -1]); [0; -1] is the texture up vector in texture space
+		// Axis signs should be multiplied into position matrix values, but multiplying here instead saves 2 multiplications
+		float x = -(pm00 * itm10 + pm10 * itm11) * xAxisSign;
+		float y = -(pm01 * itm10 + pm11 * itm11) * yAxisSign;
 
-		float value = (u3 - u0) * (v1 - v0) - (v3 - v0) * (u1 - u0);
-		if (value > 0) {
-			return Winding.COUNTERCLOCKWISE;
-		} else if (value < 0) {
-			return Winding.CLOCKWISE;
-		}
-		return Winding.UNDEFINED;
-	}
-
-	public enum Winding {
-		COUNTERCLOCKWISE,
-		CLOCKWISE,
-		UNDEFINED;
-
-		public Winding reverse() {
-			if (this == UNDEFINED) {
-				return this;
-			}
-			return this == CLOCKWISE ? COUNTERCLOCKWISE : CLOCKWISE;
-		}
+		// Clamp vector to nearest axis-aligned direction
+		// up/+y -> 0, left/-x -> 1, down/-y -> 2, right/+x -> 3
+		// Add 4 if the UV winding order is clockwise
+		return (Math.abs(y) >= Math.abs(x) ? (y > 0 ? 0 : 2) : (x > 0 ? 3 : 1)) + (determinant < 0 ? 4 : 0);
 	}
 }
