@@ -517,6 +517,8 @@ public class BaseCtmProperties implements CtmProperties {
 			return;
 		}
 
+		nameStr = nameStr.trim();
+
 		boolean isPattern;
 		boolean caseInsensitive;
 		if (nameStr.startsWith("regex:")) {
