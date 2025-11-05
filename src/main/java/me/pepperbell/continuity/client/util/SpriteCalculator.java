@@ -2,10 +2,16 @@ package me.pepperbell.continuity.client.util;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import org.apache.commons.lang3.ArrayUtils;
+import org.jetbrains.annotations.Unmodifiable;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockModels;
@@ -17,39 +23,39 @@ import net.minecraft.util.math.random.Random;
 
 public final class SpriteCalculator {
 	private static final BlockModels MODELS = MinecraftClient.getInstance().getBakedModelManager().getBlockModels();
+	private static final Direction[] CULL_FACES = ArrayUtils.add(Direction.values(), null);
 
 	private static final EnumMap<Direction, SpriteCache> SPRITE_CACHES = new EnumMap<>(Direction.class);
+
 	static {
 		for (Direction direction : Direction.values()) {
 			SPRITE_CACHES.put(direction, new SpriteCache(direction));
 		}
+
+		InvalidateRenderStateCallback.EVENT.register(SpriteCalculator::clearCache);
 	}
 
-	public static Sprite getSprite(BlockState state, Direction face) {
-		return SPRITE_CACHES.get(face).getSprite(state);
+	@Unmodifiable
+	public static Set<Sprite> getSprites(BlockState state, Direction face) {
+		return SPRITE_CACHES.get(face).getSprites(state);
 	}
 
-	public static Sprite calculateSprite(BlockState state, Direction face, Supplier<Random> randomSupplier) {
+	@Unmodifiable
+	public static Set<Sprite> calculateSprites(BlockState state, Direction face, Supplier<Random> randomSupplier) {
+		List<Sprite> sprites = new ReferenceArrayList<>();
 		BakedModel model = MODELS.getModel(state);
 		try {
-			List<BakedQuad> quads = model.getQuads(state, face, randomSupplier.get());
-			if (!quads.isEmpty()) {
-				return quads.get(0).getSprite();
-			}
-			quads = model.getQuads(state, null, randomSupplier.get());
-			if (!quads.isEmpty()) {
-				int amount = quads.size();
-				for (int i = 0; i < amount; i++) {
-					BakedQuad quad = quads.get(i);
+			for (Direction cullFace : CULL_FACES) {
+				for (BakedQuad quad : model.getQuads(state, cullFace, randomSupplier.get())) {
 					if (quad.getFace() == face) {
-						return quad.getSprite();
+						sprites.add(quad.getSprite());
 					}
 				}
 			}
 		} catch (Exception e) {
 			//
 		}
-		return model.getParticleSprite();
+		return !sprites.isEmpty() ? Set.copyOf(sprites) : Set.of(model.getParticleSprite());
 	}
 
 	public static void clearCache() {
@@ -60,7 +66,7 @@ public final class SpriteCalculator {
 
 	private static class SpriteCache {
 		private final Direction face;
-		private final Reference2ReferenceOpenHashMap<BlockState, Sprite> sprites = new Reference2ReferenceOpenHashMap<>();
+		private final Reference2ObjectOpenHashMap<BlockState, Set<Sprite>> spritesMap = new Reference2ObjectOpenHashMap<>();
 		private final Supplier<Random> randomSupplier = new Supplier<>() {
 			private final Random random = Random.create();
 
@@ -77,8 +83,9 @@ public final class SpriteCalculator {
 			this.face = face;
 		}
 
-		public Sprite getSprite(BlockState state) {
-			Sprite sprite;
+		@Unmodifiable
+		public Set<Sprite> getSprites(BlockState state) {
+			Set<Sprite> sprites;
 
 			long optimisticReadStamp = lock.tryOptimisticRead();
 			if (optimisticReadStamp != 0L) {
@@ -86,9 +93,9 @@ public final class SpriteCalculator {
 					// This map read could happen at the same time as a map write, so catch any exceptions.
 					// This is safe due to the map implementation used, which is guaranteed to not mutate the map during
 					// a read.
-					sprite = sprites.get(state);
-					if (sprite != null && lock.validate(optimisticReadStamp)) {
-						return sprite;
+					sprites = spritesMap.get(state);
+					if (sprites != null && lock.validate(optimisticReadStamp)) {
+						return sprites;
 					}
 				} catch (Exception e) {
 					//
@@ -97,31 +104,31 @@ public final class SpriteCalculator {
 
 			long readStamp = lock.readLock();
 			try {
-				sprite = sprites.get(state);
+				sprites = spritesMap.get(state);
 			} finally {
 				lock.unlockRead(readStamp);
 			}
 
-			if (sprite == null) {
+			if (sprites == null) {
 				long writeStamp = lock.writeLock();
 				try {
-					sprite = sprites.get(state);
-					if (sprite == null) {
-						sprite = calculateSprite(state, face, randomSupplier);
-						sprites.put(state, sprite);
+					sprites = spritesMap.get(state);
+					if (sprites == null) {
+						sprites = calculateSprites(state, face, randomSupplier);
+						spritesMap.put(state, sprites);
 					}
 				} finally {
 					lock.unlockWrite(writeStamp);
 				}
 			}
 
-			return sprite;
+			return sprites;
 		}
 
 		public void clear() {
 			long writeStamp = lock.writeLock();
 			try {
-				sprites.clear();
+				spritesMap.clear();
 			} finally {
 				lock.unlockWrite(writeStamp);
 			}

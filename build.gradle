@@ -28,10 +28,6 @@ repositories {
 		url 'https://api.modrinth.com/maven'
 	}
 	maven {
-		name 'VRAM'
-		url 'https://maven.vram.io'
-	}
-	maven {
 		name 'Shedaniel'
 		url 'https://maven.shedaniel.me'
 	}
@@ -50,7 +46,7 @@ dependencies {
 		exclude group: 'net.fabricmc.fabric-api'
 	}
 
-	modCompileOnly "io.vram:canvas-fabric:${canvas_version}"
+	modCompileOnly "maven.modrinth:canvas:fabric-${canvas_version}"
 }
 
 processResources {

@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -48,7 +46,6 @@ public final class QuadProcessors {
 		return new Slice(processors, multipassProcessors);
 	}
 
-	@ApiStatus.Internal
 	public static void reload(List<QuadProcessors.ProcessorHolder> processorHolders) {
 		QuadProcessors.processorHolders = processorHolders.toArray(ProcessorHolder[]::new);
 		CACHE.clear();

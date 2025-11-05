@@ -11,6 +11,7 @@ import net.minecraft.world.biome.Biome;
 
 public final class BiomeHolder {
 	private final Identifier id;
+	@Nullable
 	private Biome biome;
 
 	BiomeHolder(Identifier id) {

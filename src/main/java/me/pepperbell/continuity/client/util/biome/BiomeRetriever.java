@@ -33,9 +33,6 @@ public final class BiomeRetriever {
 		return PROVIDER.getBiome(blockView, pos);
 	}
 
-	public static void init() {
-	}
-
 	@Nullable
 	private static Biome getBiomeByAPI(BlockRenderView blockView, BlockPos pos) {
 		if (blockView.hasBiomes()) {
