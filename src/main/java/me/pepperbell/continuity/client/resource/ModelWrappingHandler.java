@@ -1,6 +1,5 @@
 package me.pepperbell.continuity.client.resource;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.ImmutableMap;
@@ -68,7 +67,6 @@ public class ModelWrappingHandler {
 		return model;
 	}
 
-	@ApiStatus.Internal
 	public static void init() {
 		ModelLoadingPlugin.register(pluginCtx -> {
 			pluginCtx.modifyModelAfterBake().register(ModelModifier.WRAP_LAST_PHASE, (model, ctx) -> {

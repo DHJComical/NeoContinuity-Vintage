@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -518,7 +517,7 @@ public class BaseCtmProperties implements CtmProperties {
 			return;
 		}
 
-		nameStr = StringEscapeUtils.escapeJava(nameStr.trim());
+		nameStr = nameStr.trim();
 
 		boolean isPattern;
 		boolean caseInsensitive;
@@ -549,7 +548,7 @@ public class BaseCtmProperties implements CtmProperties {
 			patternStr = patternStr.replace("?", "\\E.\\Q");
 			patternStr = patternStr.replace("*", "\\E.*\\Q");
 		}
-		Pattern pattern = Pattern.compile(patternStr, caseInsensitive ? Pattern.CASE_INSENSITIVE : 0);
+		Pattern pattern = Pattern.compile(patternStr, caseInsensitive ? Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE : 0);
 		blockEntityNamePredicate = blockEntityName -> pattern.matcher(blockEntityName).matches();
 	}
 
@@ -635,7 +634,6 @@ public class BaseCtmProperties implements CtmProperties {
 			} else if (tile.equals(SPECIAL_DEFAULT_ID)) {
 				spriteId = SPECIAL_DEFAULT_SPRITE_ID;
 			} else {
-				String namespace = tile.getNamespace();
 				String path = tile.getPath();
 				if (path.startsWith("textures/")) {
 					path = path.substring(9);
@@ -643,12 +641,12 @@ public class BaseCtmProperties implements CtmProperties {
 						path = path.substring(0, path.length() - 4);
 					}
 
-					spriteId = TextureUtil.toSpriteId(new Identifier(namespace, path));
+					spriteId = TextureUtil.toSpriteId(tile.withPath(path));
 					textureDependencies.add(spriteId);
 				} else if (redirectHandler != null) {
 					path = redirectHandler.getSourceSpritePath(path);
 
-					spriteId = TextureUtil.toSpriteId(new Identifier(namespace, path));
+					spriteId = TextureUtil.toSpriteId(tile.withPath(path));
 					textureDependencies.add(spriteId);
 				} else {
 					spriteId = TextureUtil.MISSING_SPRITE_ID;

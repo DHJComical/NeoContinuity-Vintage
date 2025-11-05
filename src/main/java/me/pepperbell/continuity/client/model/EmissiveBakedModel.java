@@ -66,7 +66,7 @@ public class EmissiveBakedModel extends ForwardingBakedModel {
 		}
 
 		MeshBuilder meshBuilder = container.meshBuilder;
-		quadTransform.prepare(meshBuilder.getEmitter(), blockView, state, pos, context, ContinuityConfig.INSTANCE.useManualCulling.get());
+		quadTransform.prepare(meshBuilder.getEmitter(), state, context, ContinuityConfig.INSTANCE.useManualCulling.get());
 
 		context.pushTransform(quadTransform);
 		super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -120,9 +120,7 @@ public class EmissiveBakedModel extends ForwardingBakedModel {
 
 	protected static class EmissiveBlockQuadTransform implements RenderContext.QuadTransform {
 		protected QuadEmitter emitter;
-		protected BlockRenderView blockView;
 		protected BlockState state;
-		protected BlockPos pos;
 		protected RenderContext renderContext;
 		protected boolean useManualCulling;
 
@@ -177,11 +175,9 @@ public class EmissiveBakedModel extends ForwardingBakedModel {
 			return didEmit;
 		}
 
-		public void prepare(QuadEmitter emitter, BlockRenderView blockView, BlockState state, BlockPos pos, RenderContext renderContext, boolean useManualCulling) {
+		public void prepare(QuadEmitter emitter, BlockState state, RenderContext renderContext, boolean useManualCulling) {
 			this.emitter = emitter;
-			this.blockView = blockView;
 			this.state = state;
-			this.pos = pos;
 			this.renderContext = renderContext;
 			this.useManualCulling = useManualCulling;
 
@@ -193,9 +189,7 @@ public class EmissiveBakedModel extends ForwardingBakedModel {
 
 		public void reset() {
 			emitter = null;
-			blockView = null;
 			state = null;
-			pos = null;
 			renderContext = null;
 			useManualCulling = false;
 

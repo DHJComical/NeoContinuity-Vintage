@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Continuity",
-  "description": "Continuity is a Fabric mod that allows resource packs that use the OptiFine connected textures format, OptiFine emissive textures format (only for blocks and item models), or OptiFine custom block layers format to work without OptiFine.",
+  "description": "Continuity is a Minecraft mod that allows resource packs that use the OptiFine connected textures format, OptiFine emissive textures format (only for blocks and item models), or OptiFine custom block layers format to work without OptiFine.",
   "authors": [
     "PepperCode1"
   ],
