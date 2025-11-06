@@ -3,6 +3,8 @@ package me.pepperbell.continuity.client.util.biome;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.Nullable;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -16,6 +18,7 @@ public final class BiomeHolderManager {
 	private static final Map<Identifier, BiomeHolder> HOLDER_CACHE = new Object2ObjectOpenHashMap<>();
 	private static final Set<Runnable> REFRESH_CALLBACKS = new ReferenceOpenHashSet<>();
 
+	@Nullable
 	private static DynamicRegistryManager registryManager;
 
 	public static BiomeHolder getOrCreateHolder(Identifier id) {
