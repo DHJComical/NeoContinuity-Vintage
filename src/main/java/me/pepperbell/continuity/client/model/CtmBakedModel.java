@@ -65,7 +65,7 @@ public class CtmBakedModel extends ForwardingBakedModel {
 		// especially if there is an actual use case for it.
 		BlockState appearanceState = state.getAppearance(blockView, pos, Direction.DOWN, state, pos);
 
-		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier, context, ContinuityConfig.INSTANCE.useManualCulling.get(), getSliceFunc(appearanceState));
+		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier.get().nextLong(), context, ContinuityConfig.INSTANCE.useManualCulling.get(), getSliceFunc(appearanceState));
 
 		context.pushTransform(quadTransform);
 		super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -102,12 +102,21 @@ public class CtmBakedModel extends ForwardingBakedModel {
 
 	protected static class CtmQuadTransform implements RenderContext.QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
+		protected final Supplier<Random> randomSupplier = new Supplier<>() {
+			private final Random random = Random.createLocal();
+
+			@Override
+			public Random get() {
+				random.setSeed(randomSeed);
+				return random;
+			}
+		};
 
 		protected BlockRenderView blockView;
 		protected BlockState appearanceState;
 		protected BlockState state;
 		protected BlockPos pos;
-		protected Supplier<Random> randomSupplier;
+		protected long randomSeed;
 		protected RenderContext renderContext;
 		protected boolean useManualCulling;
 		protected Function<Sprite, QuadProcessors.Slice> sliceFunc;
@@ -156,12 +165,12 @@ public class CtmBakedModel extends ForwardingBakedModel {
 			return active;
 		}
 
-		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext renderContext, boolean useManualCulling, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
+		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, long randomSeed, RenderContext renderContext, boolean useManualCulling, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
 			this.blockView = blockView;
 			this.appearanceState = appearanceState;
 			this.state = state;
 			this.pos = pos;
-			this.randomSupplier = randomSupplier;
+			this.randomSeed = randomSeed;
 			this.renderContext = renderContext;
 			this.useManualCulling = useManualCulling;
 			this.sliceFunc = sliceFunc;
@@ -176,7 +185,6 @@ public class CtmBakedModel extends ForwardingBakedModel {
 			appearanceState = null;
 			state = null;
 			pos = null;
-			randomSupplier = null;
 			renderContext = null;
 			useManualCulling = false;
 			sliceFunc = null;

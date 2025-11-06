@@ -35,21 +35,21 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 	static {
 		int[][] map = QUADRANT_INDEX_MAPS;
 
-		map[0] = new int[] { 0, 1, 2, 3 }; // 0 - 0 1 2 3
-		map[1] = map[0].clone(); // 1 - 3 0 1 2
+		map[0] = new int[] { 0, 1, 2, 3 }; // 0 1 2 3
+		map[1] = map[0].clone(); // 3 0 1 2
 		ArrayUtils.shift(map[1], 1);
-		map[2] = map[1].clone(); // 2 - 2 3 0 1
+		map[2] = map[1].clone(); // 2 3 0 1
 		ArrayUtils.shift(map[2], 1);
-		map[3] = map[2].clone(); // 3 - 1 2 3 0
+		map[3] = map[2].clone(); // 1 2 3 0
 		ArrayUtils.shift(map[3], 1);
 
-		map[4] = map[3].clone(); // 4 - 0 3 2 1
+		map[4] = map[0].clone(); // 3 2 1 0
 		ArrayUtils.reverse(map[4]);
-		map[5] = map[4].clone(); // 5 - 1 0 3 2
+		map[5] = map[4].clone(); // 0 3 2 1
 		ArrayUtils.shift(map[5], 1);
-		map[6] = map[5].clone(); // 6 - 2 1 0 3
+		map[6] = map[5].clone(); // 1 0 3 2
 		ArrayUtils.shift(map[6], 1);
-		map[7] = map[6].clone(); // 7 - 3 2 1 0
+		map[7] = map[6].clone(); // 2 1 0 3
 		ArrayUtils.shift(map[7], 1);
 	}
 
@@ -351,7 +351,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 			int spriteIndexB;
 			if (uSplit) {
 				firstSplit = uSplit01;
-				swapAB = orientation == 2 || orientation == 3 || orientation == 4 || orientation == 7;
+				swapAB = orientation == 2 || orientation == 3 || orientation == 4 || orientation == 5;
 				if ((vSignum0 + vSignum1 + vSignum2 + vSignum3) <= 0) {
 					spriteIndexA = getSpriteIndex(0, connections);
 					spriteIndexB = getSpriteIndex(3, connections);
@@ -361,7 +361,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 				}
 			} else {
 				firstSplit = vSplit01;
-				swapAB = orientation == 1 || orientation == 2 || orientation == 4 || orientation == 5;
+				swapAB = orientation == 1 || orientation == 2 || orientation == 5 || orientation == 6;
 				if ((uSignum0 + uSignum1 + uSignum2 + uSignum3) <= 0) {
 					spriteIndexA = getSpriteIndex(1, connections);
 					spriteIndexB = getSpriteIndex(0, connections);
@@ -462,7 +462,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 		int index2 = (quadrantIndex + 3) % 4;
 		boolean connected1 = ((connections >>> index1 * 2) & 1) == 1;
 		boolean connected2 = ((connections >>> index2 * 2) & 1) == 1;
-		if (connected1 && connected2) {
+		if (connected1 & connected2) {
 			if (((connections >>> (index2 * 2 + 1)) & 1) == 1) {
 				return 1;
 			}

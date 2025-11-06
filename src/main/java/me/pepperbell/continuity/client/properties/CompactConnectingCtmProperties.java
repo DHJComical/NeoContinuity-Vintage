@@ -47,7 +47,7 @@ public class CompactConnectingCtmProperties extends OrientedConnectingCtmPropert
 				String valueStr = properties.getProperty(key);
 				int value;
 				try {
-					value = Integer.parseInt(valueStr);
+					value = Integer.parseInt(valueStr.trim());
 				} catch (NumberFormatException e) {
 					ContinuityClient.LOGGER.warn("Invalid '" + key + "' value '" + valueStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 					continue;

@@ -6,7 +6,6 @@
   "client": [
     "AtlasLoaderMixin",
     "BakedModelManagerMixin",
-    "BlockModelsMixin",
     "FallingBlockEntityRendererMixin",
     "LifecycledResourceManagerImplMixin",
     "PistonBlockEntityRendererMixin",
