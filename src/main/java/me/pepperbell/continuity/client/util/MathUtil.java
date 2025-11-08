@@ -48,4 +48,8 @@ public final class MathUtil {
 	public static int mix(int x, int y, int z, int face, int loops) {
 		return mix32((MathHelper.hashCode(x, y, z) ^ mix64(GOLDEN_GAMMA * (1 + face))) + GOLDEN_GAMMA * (1 + loops));
 	}
+
+	public static int removeSignBit(int value) {
+		return value & 0x7FFFFFFF;
+	}
 }

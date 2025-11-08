@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -518,7 +517,7 @@ public class BaseCtmProperties implements CtmProperties {
 			return;
 		}
 
-		nameStr = StringEscapeUtils.escapeJava(nameStr.trim());
+		nameStr = nameStr.trim();
 
 		boolean isPattern;
 		boolean caseInsensitive;
@@ -549,7 +548,7 @@ public class BaseCtmProperties implements CtmProperties {
 			patternStr = patternStr.replace("?", "\\E.\\Q");
 			patternStr = patternStr.replace("*", "\\E.*\\Q");
 		}
-		Pattern pattern = Pattern.compile(patternStr, caseInsensitive ? Pattern.CASE_INSENSITIVE : 0);
+		Pattern pattern = Pattern.compile(patternStr, caseInsensitive ? Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE : 0);
 		blockEntityNamePredicate = blockEntityName -> pattern.matcher(blockEntityName).matches();
 	}
 

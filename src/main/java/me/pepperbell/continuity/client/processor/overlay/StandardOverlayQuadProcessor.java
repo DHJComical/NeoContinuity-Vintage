@@ -85,6 +85,15 @@ public class StandardOverlayQuadProcessor extends AbstractQuadProcessor {
 		return ProcessingResult.NEXT_PROCESSOR;
 	}
 
+	protected static boolean matchesAny(Set<Identifier> tiles, Set<Sprite> sprites) {
+		for (Sprite sprite : sprites) {
+			if (tiles.contains(sprite.getContents().getId())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	protected boolean appliesOverlay(BlockState otherAppearanceState, BlockState otherState, BlockPos otherPos, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Direction face, Sprite quadSprite) {
 		// OptiFine never applies overlays from blocks with dynamic bounds. To improve mod compatibility, call
 		// isFullCube with the correct values and do not check for dynamic bounds explicitly. For vanilla blocks, this
@@ -98,7 +107,7 @@ public class StandardOverlayQuadProcessor extends AbstractQuadProcessor {
 			}
 		}
 		if (connectTilesSet != null) {
-			if (!connectTilesSet.contains(SpriteCalculator.getSprite(otherAppearanceState, face).getContents().getId())) {
+			if (!matchesAny(connectTilesSet, SpriteCalculator.getSprites(otherAppearanceState, face))) {
 				return false;
 			}
 		}
@@ -115,7 +124,7 @@ public class StandardOverlayQuadProcessor extends AbstractQuadProcessor {
 			}
 		}
 		if (matchTilesSet != null) {
-			if (!matchTilesSet.contains(SpriteCalculator.getSprite(otherAppearanceState, face).getContents().getId())) {
+			if (!matchesAny(matchTilesSet, SpriteCalculator.getSprites(otherAppearanceState, face))) {
 				return false;
 			}
 		}

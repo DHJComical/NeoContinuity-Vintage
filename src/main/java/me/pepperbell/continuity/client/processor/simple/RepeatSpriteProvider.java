@@ -93,20 +93,20 @@ public class RepeatSpriteProvider implements SpriteProvider {
 				spriteY = -temp - 1;
 			}
 			case 4 -> {
+				spriteX = -spriteX - 1;
+			}
+			case 5 -> {
 				int temp = spriteX;
 				spriteX = spriteY;
 				spriteY = temp;
 			}
-			case 5 -> {
+			case 6 -> {
 				spriteY = -spriteY - 1;
 			}
-			case 6 -> {
+			case 7 -> {
 				int temp = spriteX;
 				spriteX = -spriteY - 1;
 				spriteY = -temp - 1;
-			}
-			case 7 -> {
-				spriteX = -spriteX - 1;
 			}
 		}
 

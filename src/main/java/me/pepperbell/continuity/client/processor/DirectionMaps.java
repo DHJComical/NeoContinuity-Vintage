@@ -36,14 +36,14 @@ public final class DirectionMaps {
 			map[3] = map[2].clone(); // u l d r
 			ArrayUtils.shift(map[3], -1);
 
-			map[4] = map[0].clone(); // u r d l ; v - 1 ; h - 3
-			ArrayUtils.reverse(map[4]);
-			map[5] = map[4].clone(); // l u r d ; v - 0 ; h - 2
-			ArrayUtils.shift(map[5], 1);
-			map[6] = map[5].clone(); // d l u r ; v - 3 ; h - 1
-			ArrayUtils.shift(map[6], 1);
-			map[7] = map[6].clone(); // r d l u ; v - 2 ; h - 0
-			ArrayUtils.shift(map[7], 1);
+			map[4] = map[0].clone(); // r d l u
+			ArrayUtils.swap(map[4], 0, 2);
+			map[5] = map[1].clone(); // u r d l
+			ArrayUtils.swap(map[5], 0, 2);
+			map[6] = map[2].clone(); // l u r d
+			ArrayUtils.swap(map[6], 0, 2);
+			map[7] = map[3].clone(); // d l u r
+			ArrayUtils.swap(map[7], 0, 2);
 		}
 	}
 

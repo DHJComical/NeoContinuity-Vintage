@@ -39,7 +39,7 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 		try {
 			connectionPredicate = ConnectionType.valueOf(connectStr.trim().toUpperCase(Locale.ROOT));
 		} catch (IllegalArgumentException e) {
-			//
+			ContinuityClient.LOGGER.warn("Unknown 'connect' value '" + connectStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 		}
 	}
 
@@ -77,7 +77,7 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 				if (appearanceState == otherAppearanceState) {
 					return true;
 				}
-				return quadSprite == SpriteCalculator.getSprite(otherAppearanceState, face);
+				return SpriteCalculator.getSprites(otherAppearanceState, face).contains(quadSprite);
 			}
 		},
 		STATE {

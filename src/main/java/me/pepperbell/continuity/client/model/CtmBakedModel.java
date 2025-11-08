@@ -69,7 +69,7 @@ public class CtmBakedModel extends WrapperBakedModel {
 		// especially if there is an actual use case for it.
 		BlockState appearanceState = state.getAppearance(blockView, pos, Direction.DOWN, state, pos);
 
-		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier, cullTest, getSliceFunc(appearanceState));
+		quadTransform.prepare(blockView, appearanceState, state, pos, randomSupplier.get().nextLong(), cullTest, getSliceFunc(appearanceState));
 
 		emitter.pushTransform(quadTransform);
 		super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
@@ -106,12 +106,21 @@ public class CtmBakedModel extends WrapperBakedModel {
 
 	protected static class CtmQuadTransform implements QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
+        protected final Supplier<Random> randomSupplier = new Supplier<>() {
+            private final Random random = Random.createLocal();
+
+            @Override
+            public Random get() {
+                random.setSeed(randomSeed);
+                return random;
+            }
+        };
 
 		protected BlockRenderView blockView;
 		protected BlockState appearanceState;
 		protected BlockState state;
 		protected BlockPos pos;
-		protected Supplier<Random> randomSupplier;
+		protected long randomSeed;
 		protected Predicate<@Nullable Direction> cullTest;
 		protected Function<Sprite, QuadProcessors.Slice> sliceFunc;
 
@@ -159,12 +168,12 @@ public class CtmBakedModel extends WrapperBakedModel {
 			return active;
 		}
 
-		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, Predicate<@Nullable Direction> cullTest, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
+		public void prepare(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, long randomSeed, Predicate<@Nullable Direction> cullTest, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
 			this.blockView = blockView;
 			this.appearanceState = appearanceState;
 			this.state = state;
 			this.pos = pos;
-			this.randomSupplier = randomSupplier;
+			this.randomSeed = randomSeed;
 			this.cullTest = cullTest;
 			this.sliceFunc = sliceFunc;
 
@@ -176,7 +185,6 @@ public class CtmBakedModel extends WrapperBakedModel {
 			appearanceState = null;
 			state = null;
 			pos = null;
-			randomSupplier = null;
 			cullTest = null;
 			sliceFunc = null;
 
