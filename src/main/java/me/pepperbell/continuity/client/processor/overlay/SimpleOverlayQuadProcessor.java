@@ -11,10 +11,10 @@ import me.pepperbell.continuity.client.properties.overlay.OverlayPropertiesSecti
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.TextureUtil;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
@@ -24,13 +24,15 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 	protected int tintIndex;
 	@Nullable
 	protected BlockState tintBlock;
-	protected RenderMaterial material;
+	protected BlockRenderLayer layer;
+	protected TriState ao;
 
-	public SimpleOverlayQuadProcessor(SpriteProvider spriteProvider, ProcessingPredicate processingPredicate, int tintIndex, @Nullable BlockState tintBlock, BlendMode layer) {
+	public SimpleOverlayQuadProcessor(SpriteProvider spriteProvider, ProcessingPredicate processingPredicate, int tintIndex, @Nullable BlockState tintBlock, BlockRenderLayer layer) {
 		super(spriteProvider, processingPredicate);
 		this.tintIndex = tintIndex;
 		this.tintBlock = tintBlock;
-		material = RenderUtil.findOverlayMaterial(layer, this.tintBlock);
+		this.layer = layer;
+		this.ao = RenderUtil.aoFromTintBlock(tintBlock);
 	}
 
 	@Override
@@ -38,7 +40,7 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 		if (processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
 			Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, pos, appearanceState, state, random, context);
 			if (newSprite != null && !TextureUtil.isMissingSprite(newSprite)) {
-				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), material);
+				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), layer, ao);
 			}
 		}
 		return ProcessingResult.NEXT_PROCESSOR;

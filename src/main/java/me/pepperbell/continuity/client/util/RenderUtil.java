@@ -6,10 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
@@ -30,8 +26,6 @@ public final class RenderUtil {
 	private static final BlockColors BLOCK_COLORS = MinecraftClient.getInstance().getBlockColors();
 	private static final BakedModelManager MODEL_MANAGER = MinecraftClient.getInstance().getBakedModelManager();
 
-	private static final ThreadLocal<MaterialFinder> MATERIAL_FINDER = ThreadLocal.withInitial(() -> Renderer.get().materialFinder());
-
 	private static SpriteFinder blockAtlasSpriteFinder;
 
 	public static int getTintColor(@Nullable BlockState state, BlockRenderView blockView, BlockPos pos, int tintIndex) {
@@ -41,23 +35,16 @@ public final class RenderUtil {
 		return 0xFF000000 | BLOCK_COLORS.getColor(state, blockView, pos, tintIndex);
 	}
 
-	public static RenderMaterial findOverlayMaterial(BlendMode blendMode, @Nullable BlockState tintBlock) {
-		MaterialFinder finder = getMaterialFinder();
-		finder.blendMode(blendMode);
+	public static TriState aoFromTintBlock(@Nullable BlockState tintBlock) {
 		if (tintBlock != null) {
-			finder.ambientOcclusion(TriState.of(canHaveAO(tintBlock)));
+			return TriState.of(canHaveAO(tintBlock));
 		} else {
-			finder.ambientOcclusion(TriState.TRUE);
+			return TriState.TRUE;
 		}
-		return finder.find();
 	}
 
 	public static boolean canHaveAO(BlockState state) {
 		return state.getLuminance() == 0;
-	}
-
-	public static MaterialFinder getMaterialFinder() {
-		return MATERIAL_FINDER.get().clear();
 	}
 
 	public static SpriteFinder getSpriteFinder() {
@@ -75,7 +62,7 @@ public final class RenderUtil {
 
 		@Override
 		public void reload(ResourceManager manager) {
-			blockAtlasSpriteFinder = SpriteFinder.get(MODEL_MANAGER.getAtlas(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE));
+			blockAtlasSpriteFinder = MODEL_MANAGER.getAtlas(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).spriteFinder();
 		}
 
 		@Override

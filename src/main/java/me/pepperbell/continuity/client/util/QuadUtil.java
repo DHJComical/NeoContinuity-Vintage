@@ -1,9 +1,12 @@
 package me.pepperbell.continuity.client.util;
 
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import org.jetbrains.annotations.Nullable;
+
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -38,11 +41,12 @@ public final class QuadUtil {
 		quad.uv(3, lerpedMaxU, lerpedMinV);
 	}
 
-	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, Sprite sprite, int color, RenderMaterial material) {
+	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, Sprite sprite, int color, @Nullable BlockRenderLayer renderLayer, TriState ao) {
 		emitter.square(face, 0, 0, 1, 1, 0);
 		emitter.color(color, color, color, color);
 		assignLerpedUvs(emitter, sprite);
-		emitter.material(material);
+		emitter.renderLayer(renderLayer);
+		emitter.ambientOcclusion(ao);
 		emitter.emit();
 	}
 

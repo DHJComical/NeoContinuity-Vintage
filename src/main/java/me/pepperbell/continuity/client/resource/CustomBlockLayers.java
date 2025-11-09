@@ -14,7 +14,7 @@ import me.pepperbell.continuity.client.properties.PropertiesParsingHelper;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.ResourceType;
@@ -38,7 +38,7 @@ public final class CustomBlockLayers {
 	}
 
 	@Nullable
-	public static RenderLayer getLayer(BlockState state) {
+	public static BlockRenderLayer getLayer(BlockState state) {
 		if (!disableSolidCheck) {
 			if (state.isOpaqueFullCube()) {
 				return null;
@@ -110,22 +110,22 @@ public final class CustomBlockLayers {
 	}
 
 	private enum BlockLayer {
-		SOLID(RenderLayer.getSolid()),
-		CUTOUT(RenderLayer.getCutout()),
-		CUTOUT_MIPPED(RenderLayer.getCutoutMipped()),
-		TRANSLUCENT(RenderLayer.getTranslucent());
+		SOLID(BlockRenderLayer.SOLID),
+		CUTOUT(BlockRenderLayer.CUTOUT),
+		CUTOUT_MIPPED(BlockRenderLayer.CUTOUT_MIPPED),
+		TRANSLUCENT(BlockRenderLayer.TRANSLUCENT);
 
 		public static final BlockLayer[] VALUES = values();
 
-		private final RenderLayer layer;
+		private final BlockRenderLayer layer;
 		private final String key;
 
-		BlockLayer(RenderLayer layer) {
+		BlockLayer(BlockRenderLayer layer) {
 			this.layer = layer;
 			key = name().toLowerCase(Locale.ROOT);
 		}
 
-		public RenderLayer getLayer() {
+		public BlockRenderLayer getLayer() {
 			return layer;
 		}
 

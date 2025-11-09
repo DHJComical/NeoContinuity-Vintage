@@ -6,9 +6,9 @@ import java.util.Properties;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -21,7 +21,7 @@ public class OverlayPropertiesSection {
 	protected int tintIndex = -1;
 	@Nullable
 	protected BlockState tintBlock;
-	protected BlendMode layer = BlendMode.CUTOUT_MIPPED;
+	protected BlockRenderLayer layer = BlockRenderLayer.CUTOUT_MIPPED;
 
 	public OverlayPropertiesSection(Properties properties, Identifier resourceId, String packId) {
 		this.properties = properties;
@@ -92,9 +92,9 @@ public class OverlayPropertiesSection {
 
 		String layerStr1 = layerStr.trim().toLowerCase(Locale.ROOT);
 		switch (layerStr1) {
-			case "cutout_mipped" -> layer = BlendMode.CUTOUT_MIPPED;
-			case "cutout" -> layer = BlendMode.CUTOUT;
-			case "translucent" -> layer = BlendMode.TRANSLUCENT;
+			case "cutout_mipped" -> layer = BlockRenderLayer.CUTOUT_MIPPED;
+			case "cutout" -> layer = BlockRenderLayer.CUTOUT;
+			case "translucent" -> layer = BlockRenderLayer.TRANSLUCENT;
 			default -> ContinuityClient.LOGGER.warn("Unknown 'layer' value '" + layerStr + " in file '" + resourceId + "' in pack '" + packId + "'");
 		}
 	}
@@ -108,7 +108,7 @@ public class OverlayPropertiesSection {
 		return tintBlock;
 	}
 
-	public BlendMode getLayer() {
+	public BlockRenderLayer getLayer() {
 		return layer;
 	}
 
