@@ -22,6 +22,6 @@ public interface SpriteLoaderLoadContext {
 
 		void setEmissiveIdMap(Map<Identifier, Identifier> emissiveIdMap);
 
-		void markHasEmissives();
+		void setHasEmissives(boolean hasEmissives);
 	}
 }

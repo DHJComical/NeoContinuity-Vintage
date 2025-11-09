@@ -1,6 +1,7 @@
 package me.pepperbell.continuity.client.mixin;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,9 +79,9 @@ abstract class AtlasLoaderMixin {
 					}
 				});
 				suppliers.putAll(emissiveSuppliers);
-				if (!emissiveIdMap.isEmpty()) {
-					context.setEmissiveIdMap(emissiveIdMap);
-				}
+				context.setEmissiveIdMap(emissiveIdMap);
+			} else {
+				context.setEmissiveIdMap(Collections.emptyMap());
 			}
 		}
 	}

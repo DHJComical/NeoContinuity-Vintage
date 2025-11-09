@@ -11,13 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.properties.PropertiesParsingHelper;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.util.Identifier;
 
 public final class CustomBlockLayers {
@@ -90,22 +88,13 @@ public final class CustomBlockLayers {
 		}
 	}
 
-	public static class ReloadListener implements SimpleSynchronousResourceReloadListener {
+	public static class ReloadListener implements SynchronousResourceReloader {
 		public static final Identifier ID = ContinuityClient.asId("custom_block_layers");
-		private static final ReloadListener INSTANCE = new ReloadListener();
-
-		public static void init() {
-			ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(INSTANCE);
-		}
+		public static final ReloadListener INSTANCE = new ReloadListener();
 
 		@Override
 		public void reload(ResourceManager manager) {
 			CustomBlockLayers.reload(manager);
-		}
-
-		@Override
-		public Identifier getFabricId() {
-			return ID;
 		}
 	}
 

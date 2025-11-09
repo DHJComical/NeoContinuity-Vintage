@@ -1,61 +1,43 @@
 package me.pepperbell.continuity.client.resource;
 
-import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.CompletableFuture;
 
 import me.pepperbell.continuity.client.model.CtmBlockStateModel;
 import me.pepperbell.continuity.client.model.EmissiveBlockStateModel;
-import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BlockStateModel;
+import net.fabricmc.fabric.api.client.model.loading.v1.PreparableModelLoadingPlugin;
+import net.minecraft.resource.ResourceReloader;
 
-public class ModelWrappingHandler {
-	@Nullable
-	private static volatile ModelWrappingHandler instance;
-
-	private final boolean wrapCtm;
-	private final boolean wrapEmissive;
-
-	private ModelWrappingHandler(boolean wrapCtm, boolean wrapEmissive) {
-		this.wrapCtm = wrapCtm;
-		this.wrapEmissive = wrapEmissive;
-	}
-
-	@Nullable
-	public static ModelWrappingHandler getInstance() {
-		return instance;
-	}
-
-	public static void setInstance(boolean wrapCtm, boolean wrapEmissive) {
-		if (!wrapCtm && !wrapEmissive) {
-			return;
-		}
-		instance = new ModelWrappingHandler(wrapCtm, wrapEmissive);
-	}
-
-	public static void resetInstance() {
-		instance = null;
-	}
-
-	public BlockStateModel wrapBlock(BlockStateModel model, BlockState state) {
-		if (wrapCtm) {
-			model = new CtmBlockStateModel(model, state);
-		}
-		if (wrapEmissive) {
-			model = new EmissiveBlockStateModel(model);
-		}
-		return model;
-	}
+public final class ModelWrappingHandler {
+	public static final ResourceReloader.Key<CompletableFuture<Boolean>> WRAP_CTM_FUTURE_KEY = new ResourceReloader.Key<>();
+	public static final ResourceReloader.Key<CompletableFuture<Boolean>> WRAP_EMISSIVE_FUTURE_KEY = new ResourceReloader.Key<>();
 
 	public static void init() {
-		ModelLoadingPlugin.register(pluginCtx -> {
+		PreparableModelLoadingPlugin.register((store, executor) -> {
+			CompletableFuture<Boolean> wrapCtmFuture = store.getOrThrow(WRAP_CTM_FUTURE_KEY);
+			CompletableFuture<Boolean> wrapEmissiveFuture = store.getOrThrow(WRAP_EMISSIVE_FUTURE_KEY);
+			return CompletableFuture.allOf(wrapCtmFuture, wrapEmissiveFuture).thenApplyAsync(v -> {
+				return new Data(wrapCtmFuture.join(), wrapEmissiveFuture.join());
+			}, executor);
+		}, (data, pluginCtx) -> {
+			boolean wrapCtm = data.wrapCtm();
+			boolean wrapEmissive = data.wrapEmissive();
+			if (!wrapCtm && !wrapEmissive) {
+				return;
+			}
+
 			pluginCtx.modifyBlockModelAfterBake().register(ModelModifier.WRAP_LAST_PHASE, (model, ctx) -> {
-				ModelWrappingHandler wrappingHandler = getInstance();
-				if (wrappingHandler != null) {
-					return wrappingHandler.wrapBlock(model, ctx.state());
+				if (wrapCtm) {
+					model = new CtmBlockStateModel(model, ctx.state());
+				}
+				if (wrapEmissive) {
+					model = new EmissiveBlockStateModel(model);
 				}
 				return model;
 			});
 		});
+	}
+
+	private record Data(boolean wrapCtm, boolean wrapEmissive) {
 	}
 }

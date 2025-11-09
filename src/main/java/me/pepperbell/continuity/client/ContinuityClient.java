@@ -36,6 +36,7 @@ import me.pepperbell.continuity.client.properties.overlay.OrientedConnectingOver
 import me.pepperbell.continuity.client.properties.overlay.RandomOverlayCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.RepeatOverlayCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.StandardOverlayCtmProperties;
+import me.pepperbell.continuity.client.resource.CtmResourceReloader;
 import me.pepperbell.continuity.client.resource.CustomBlockLayers;
 import me.pepperbell.continuity.client.resource.ModelWrappingHandler;
 import me.pepperbell.continuity.client.util.RenderUtil;
@@ -44,7 +45,10 @@ import me.pepperbell.continuity.impl.client.ProcessingDataKeyRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -59,8 +63,12 @@ public class ContinuityClient implements ClientModInitializer {
 		BiomeHolderManager.init();
 		ProcessingDataKeys.init();
 		ModelWrappingHandler.init();
-		RenderUtil.ReloadListener.init();
-		CustomBlockLayers.ReloadListener.init();
+
+		ResourceLoader resourceLoader = ResourceLoader.get(ResourceType.CLIENT_RESOURCES);
+		resourceLoader.registerReloader(RenderUtil.ReloadListener.ID, RenderUtil.ReloadListener.INSTANCE);
+		resourceLoader.addReloaderOrdering(ResourceReloaderKeys.Client.ATLAS, RenderUtil.ReloadListener.ID);
+		resourceLoader.registerReloader(CustomBlockLayers.ReloadListener.ID, CustomBlockLayers.ReloadListener.INSTANCE);
+		resourceLoader.registerReloader(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
 
 		FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
 			ResourceManagerHelper.registerBuiltinResourcePack(asId("default"), container, Text.translatable("resourcePack.continuity.default.name"), ResourcePackActivationType.NORMAL);

@@ -9,5 +9,5 @@ public interface SpriteLoaderStitchContext {
 
 	Map<Identifier, Identifier> getEmissiveIdMap();
 
-	void markHasEmissives();
+	void setHasEmissives(boolean hasEmissives);
 }

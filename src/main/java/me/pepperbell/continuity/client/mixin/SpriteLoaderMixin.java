@@ -8,6 +8,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +35,7 @@ abstract class SpriteLoaderMixin {
 	@Final
 	private Identifier id;
 
-	@ModifyArg(method = "load(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/Identifier;ILjava/util/concurrent/Executor;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0), index = 0)
+	@ModifyArg(method = "load(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/Identifier;ILjava/util/concurrent/Executor;Ljava/util/Set;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0), index = 0)
 	private Supplier<List<Function<SpriteOpener, SpriteContents>>> continuity$modifySupplier(Supplier<List<Function<SpriteOpener, SpriteContents>>> supplier) {
 		SpriteLoaderLoadContext context = SpriteLoaderLoadContext.THREAD_LOCAL.get();
 		if (context != null) {
@@ -60,7 +61,7 @@ abstract class SpriteLoaderMixin {
 		return supplier;
 	}
 
-	@ModifyArg(method = "load(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/Identifier;ILjava/util/concurrent/Executor;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenApply(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0), index = 0)
+	@ModifyArg(method = "load(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/Identifier;ILjava/util/concurrent/Executor;Ljava/util/Set;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenApply(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0), index = 0)
 	private Function<List<SpriteContents>, SpriteLoader.StitchResult> continuity$modifyFunction(Function<List<SpriteContents>, SpriteLoader.StitchResult> function) {
 		SpriteLoaderLoadContext context = SpriteLoaderLoadContext.THREAD_LOCAL.get();
 		if (context != null) {
@@ -76,8 +77,8 @@ abstract class SpriteLoaderMixin {
 							}
 
 							@Override
-							public void markHasEmissives() {
-								emissiveControl.markHasEmissives();
+							public void setHasEmissives(boolean hasEmissives) {
+								emissiveControl.setHasEmissives(hasEmissives);
 							}
 						});
 						SpriteLoader.StitchResult result = function.apply(spriteContentsList);
@@ -96,17 +97,19 @@ abstract class SpriteLoaderMixin {
 		SpriteLoaderStitchContext context = SpriteLoaderStitchContext.THREAD_LOCAL.get();
 		if (context != null) {
 			Map<Identifier, Identifier> emissiveIdMap = context.getEmissiveIdMap();
-			Map<Identifier, Sprite> sprites = cir.getReturnValue().regions();
+			Map<Identifier, Sprite> sprites = cir.getReturnValue().sprites();
+			MutableBoolean hasEmissives = new MutableBoolean(false);
 			emissiveIdMap.forEach((id, emissiveId) -> {
 				Sprite sprite = sprites.get(id);
 				if (sprite != null) {
 					Sprite emissiveSprite = sprites.get(emissiveId);
 					if (emissiveSprite != null) {
 						((SpriteExtension) sprite).continuity$setEmissiveSprite(emissiveSprite);
-						context.markHasEmissives();
+						hasEmissives.setTrue();
 					}
 				}
 			});
+			context.setHasEmissives(hasEmissives.booleanValue());
 		}
 	}
 }
