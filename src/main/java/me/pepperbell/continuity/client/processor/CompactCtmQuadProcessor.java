@@ -2,7 +2,6 @@ package me.pepperbell.continuity.client.processor;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
@@ -68,11 +67,11 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context) {
+	public ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
 		int orientation = orientationMode.getOrientation(quad, appearanceState);
 		Direction[] directions = DirectionMaps.getMap(quad.lightFace())[orientation];
 		BlockPos.Mutable mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = CtmSpriteProvider.getConnections(directions, connectionPredicate, innerSeams, mutablePos, blockView, appearanceState, state, pos, quad.lightFace(), sprite);
+		int connections = CtmSpriteProvider.getConnections(directions, connectionPredicate, innerSeams, mutablePos, blockView, pos, appearanceState, state, quad.lightFace(), sprite);
 
 		//
 

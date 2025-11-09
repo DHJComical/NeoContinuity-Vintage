@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor.overlay;
 
-import java.util.function.Supplier;
-
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
@@ -36,9 +34,9 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context) {
-		if (processingPredicate.shouldProcessQuad(quad, sprite, blockView, appearanceState, state, pos, context)) {
-			Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, appearanceState, state, pos, randomSupplier, context);
+	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
+		if (processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
+			Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, pos, appearanceState, state, random, context);
 			if (newSprite != null && !TextureUtil.isMissingSprite(newSprite)) {
 				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), material);
 			}

@@ -37,7 +37,7 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 	}
 
 	@Override
-	public boolean shouldProcessQuad(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, ProcessingDataProvider dataProvider) {
+	public boolean shouldProcessQuad(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
 		if (heightPredicate != null) {
 			if (!heightPredicate.test(pos.getY())) {
 				return false;

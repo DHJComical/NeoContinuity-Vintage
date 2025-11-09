@@ -67,13 +67,13 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 	public enum ConnectionType implements ConnectionPredicate {
 		BLOCK {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, BlockState otherAppearanceState, BlockState otherState, BlockPos otherPos, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
 				return appearanceState.getBlock() == otherAppearanceState.getBlock();
 			}
 		},
 		TILE {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, BlockState otherAppearanceState, BlockState otherState, BlockPos otherPos, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
 				if (appearanceState == otherAppearanceState) {
 					return true;
 				}
@@ -82,7 +82,7 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 		},
 		STATE {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, BlockState otherAppearanceState, BlockState otherState, BlockPos otherPos, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
 				return appearanceState == otherAppearanceState;
 			}
 		};

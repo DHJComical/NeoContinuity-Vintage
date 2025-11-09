@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import java.util.function.Supplier;
-
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
@@ -36,28 +34,28 @@ public class VerticalHorizontalSpriteProvider extends VerticalSpriteProvider {
 
 	@Override
 	@Nullable
-	public Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, ProcessingDataProvider dataProvider) {
+	public Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, ProcessingDataProvider dataProvider) {
 		Direction[] directions = DirectionMaps.getDirections(orientationMode, quad, appearanceState);
 		BlockPos.Mutable mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = getConnections(directions, mutablePos, blockView, appearanceState, state, pos, quad.lightFace(), sprite);
+		int connections = getConnections(directions, mutablePos, blockView, pos, appearanceState, state, quad.lightFace(), sprite);
 		if (connections != 0) {
 			return sprites[SPRITE_INDEX_MAP[connections]];
 		} else {
-			int secondaryConnections = getSecondaryConnections(directions, mutablePos, blockView, appearanceState, state, pos, quad.lightFace(), sprite);
+			int secondaryConnections = getSecondaryConnections(directions, mutablePos, blockView, pos, appearanceState, state, quad.lightFace(), sprite);
 			return sprites[SECONDARY_SPRITE_INDEX_MAP[secondaryConnections]];
 		}
 	}
 
-	protected int getSecondaryConnections(Direction[] directions, BlockPos.Mutable mutablePos, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Direction face, Sprite quadSprite) {
+	protected int getSecondaryConnections(Direction[] directions, BlockPos.Mutable mutablePos, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Direction face, Sprite quadSprite) {
 		int connections = 0;
 		for (int i = 0; i < 2; i++) {
 			Direction direction = directions[i * 2];
 			mutablePos.set(pos, direction);
-			if (connectionPredicate.shouldConnect(blockView, state, appearanceState, pos, mutablePos, face, quadSprite, innerSeams)) {
+			if (connectionPredicate.shouldConnect(blockView, pos, state, appearanceState, mutablePos, face, quadSprite, innerSeams)) {
 				connections |= 1 << (i * 3);
 				for (int j = 0; j < 2; j++) {
 					mutablePos.set(pos, direction).move(directions[((i + j) % 2) * 2 + 1]);
-					if (connectionPredicate.shouldConnect(blockView, appearanceState, state, pos, mutablePos, face, quadSprite, innerSeams)) {
+					if (connectionPredicate.shouldConnect(blockView, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
 						connections |= 1 << ((i * 3 + j * 2 + 5) % 6);
 					}
 				}

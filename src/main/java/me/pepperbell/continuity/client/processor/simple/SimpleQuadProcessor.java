@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import java.util.function.Supplier;
-
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
@@ -28,11 +26,11 @@ public class SimpleQuadProcessor implements QuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context) {
-		if (!processingPredicate.shouldProcessQuad(quad, sprite, blockView, appearanceState, state, pos, context)) {
+	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
+		if (!processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
-		Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, appearanceState, state, pos, randomSupplier, context);
+		Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, pos, appearanceState, state, random, context);
 		return process(quad, sprite, newSprite);
 	}
 

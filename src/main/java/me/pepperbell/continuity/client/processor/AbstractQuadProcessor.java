@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor;
 
-import java.util.function.Supplier;
-
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.minecraft.block.BlockState;
@@ -20,12 +18,12 @@ public abstract class AbstractQuadProcessor implements QuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context) {
-		if (!processingPredicate.shouldProcessQuad(quad, sprite, blockView, appearanceState, state, pos, context)) {
+	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
+		if (!processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
-		return processQuadInner(quad, sprite, blockView, appearanceState, state, pos, randomSupplier, pass, context);
+		return processQuadInner(quad, sprite, blockView, pos, appearanceState, state, random, pass, context);
 	}
 
-	public abstract ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context);
+	public abstract ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context);
 }

@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import java.util.function.Supplier;
-
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
@@ -15,7 +13,7 @@ import net.minecraft.world.BlockRenderView;
 
 public interface SpriteProvider {
 	@Nullable
-	Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, ProcessingDataProvider dataProvider);
+	Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, ProcessingDataProvider dataProvider);
 
 	interface Factory<T extends BaseCtmProperties> {
 		SpriteProvider createSpriteProvider(Sprite[] sprites, T properties);

@@ -4,7 +4,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
-import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -19,7 +18,7 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockModels;
-import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -55,16 +54,7 @@ public final class SpriteCalculator {
 		private final Reference2ObjectOpenHashMap<BlockState, Set<Sprite>> spritesMap = new Reference2ObjectOpenHashMap<>();
 		private final MutableMesh mutableMesh = Renderer.get().mutableMesh();
 		private final CollectingQuadTransform quadTransform;
-		private final Supplier<Random> randomSupplier = new Supplier<>() {
-			private final Random random = Random.create();
-
-			@Override
-			public Random get() {
-				// Use item rendering seed for consistency
-				random.setSeed(42L);
-				return random;
-			}
-		};
+		private final Random random = Random.createLocal();
 		private final StampedLock lock = new StampedLock();
 
 		public SpriteCache(Direction face) {
@@ -116,18 +106,19 @@ public final class SpriteCalculator {
 
 		@Unmodifiable
 		private Set<Sprite> calculateSprites(BlockState state) {
-			BakedModel model = MODELS.getModel(state);
+			BlockStateModel model = MODELS.getModel(state);
 			QuadEmitter emitter = mutableMesh.emitter();
 			quadTransform.clear();
 			emitter.pushTransform(quadTransform);
+			random.setSeed(42);
 			try {
-				model.emitBlockQuads(emitter, EmptyBlockRenderView.INSTANCE, state, BlockPos.ORIGIN, randomSupplier, cullFace -> false);
+				model.emitQuads(emitter, EmptyBlockRenderView.INSTANCE, BlockPos.ORIGIN, state, random, cullFace -> false);
 			} catch (Exception e) {
 				//
 			}
 			emitter.popTransform();
 			Set<Sprite> sprites = quadTransform.result();
-			return !sprites.isEmpty() ? sprites : Set.of(model.getParticleSprite());
+			return !sprites.isEmpty() ? sprites : Set.of(model.particleSprite());
 		}
 
 		public void clear() {

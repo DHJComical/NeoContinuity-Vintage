@@ -1,7 +1,5 @@
 package me.pepperbell.continuity.client.processor;
 
-import java.util.function.Supplier;
-
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.processor.simple.SimpleQuadProcessor;
 import me.pepperbell.continuity.client.properties.ConnectingCtmProperties;
@@ -25,7 +23,7 @@ public class TopQuadProcessor extends AbstractQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockState appearanceState, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, int pass, ProcessingContext context) {
+	public ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
 		Direction lightFace = quad.lightFace();
 		Direction.Axis axis;
 		if (appearanceState.contains(Properties.AXIS)) {
@@ -36,7 +34,7 @@ public class TopQuadProcessor extends AbstractQuadProcessor {
 		if (lightFace.getAxis() != axis) {
 			Direction up = Direction.from(axis, Direction.AxisDirection.POSITIVE);
 			BlockPos.Mutable mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS).set(pos, up);
-			if (connectionPredicate.shouldConnect(blockView, appearanceState, state, pos, mutablePos, lightFace, sprite, innerSeams)) {
+			if (connectionPredicate.shouldConnect(blockView, pos, appearanceState, state, mutablePos, lightFace, sprite, innerSeams)) {
 				return SimpleQuadProcessor.process(quad, sprite, sprites[0]);
 			}
 		}
