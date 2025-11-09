@@ -106,15 +106,15 @@ public class CtmBakedModel extends WrapperBakedModel {
 
 	protected static class CtmQuadTransform implements QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
-        protected final Supplier<Random> randomSupplier = new Supplier<>() {
-            private final Random random = Random.createLocal();
+		protected final Supplier<Random> randomSupplier = new Supplier<>() {
+			private final Random random = Random.createLocal();
 
-            @Override
-            public Random get() {
-                random.setSeed(randomSeed);
-                return random;
-            }
-        };
+			@Override
+			public Random get() {
+				random.setSeed(randomSeed);
+				return random;
+			}
+		};
 
 		protected BlockRenderView blockView;
 		protected BlockState appearanceState;
