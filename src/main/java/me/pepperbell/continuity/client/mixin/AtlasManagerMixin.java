@@ -38,9 +38,9 @@ abstract class AtlasManagerMixin {
 
 		// This shouldn't be necessary, but it prevents a deadlock if for whatever reason the future isn't completed
 		// before this.
-		stitch.getPreparations(Atlases.BLOCKS).whenComplete(((stitchResult, t) -> {
+		stitch.getPreparations(Atlases.BLOCKS).whenComplete((stitchResult, t) -> {
 			wrapEmissiveFuture.complete(false);
-		}));
+		});
 
 		SpriteLoaderLoadContext.THREAD_LOCAL.set(new SpriteLoaderLoadContextImpl(allExtraIdsFuture, wrapEmissiveFuture));
 	}

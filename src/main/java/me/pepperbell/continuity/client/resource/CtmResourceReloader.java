@@ -57,13 +57,13 @@ public class CtmResourceReloader implements ResourceReloader {
 				}
 				return blockAtlasStitchResult.missing();
 			});
-		}, prepareExecutor).whenComplete(((processorHolders, t) -> {
+		}, prepareExecutor).whenComplete((processorHolders, t) -> {
 			if (processorHolders != null) {
 				wrapCtmFuture.complete(!processorHolders.isEmpty());
 			} else {
 				wrapCtmFuture.completeExceptionally(t);
 			}
-		}));
+		});
 
 		Objects.requireNonNull(synchronizer);
 		return future.thenCompose(synchronizer::whenPrepared).thenAcceptAsync(this::apply, applyExecutor);
