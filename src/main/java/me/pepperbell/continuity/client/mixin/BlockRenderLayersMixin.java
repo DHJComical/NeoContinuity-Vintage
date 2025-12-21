@@ -10,11 +10,11 @@ import me.pepperbell.continuity.client.resource.CustomBlockLayers;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderLayerHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.BlockRenderLayer;
+import net.minecraft.client.render.BlockRenderLayers;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
 
-@Mixin(RenderLayers.class)
-abstract class RenderLayersMixin {
+@Mixin(BlockRenderLayers.class)
+abstract class BlockRenderLayersMixin {
 	@Inject(method = "getBlockLayer(Lnet/minecraft/block/BlockState;)Lnet/minecraft/client/render/BlockRenderLayer;", at = @At("HEAD"), cancellable = true)
 	private static void continuity$onHeadGetBlockLayer(BlockState state, CallbackInfoReturnable<BlockRenderLayer> cir) {
 		if (!CustomBlockLayers.isEmpty() && ContinuityConfig.INSTANCE.customBlockLayers.get()) {

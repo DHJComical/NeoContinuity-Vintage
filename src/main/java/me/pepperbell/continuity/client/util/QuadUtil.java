@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
 
 public final class QuadUtil {
 	public static void interpolate(MutableQuadView quad, Sprite oldSprite, Sprite newSprite) {
@@ -27,24 +26,10 @@ public final class QuadUtil {
 		}
 	}
 
-	public static void assignLerpedUvs(MutableQuadView quad, Sprite sprite) {
-		float delta = sprite.getUvScaleDelta();
-		float centerU = (sprite.getMinU() + sprite.getMaxU()) * 0.5f;
-		float centerV = (sprite.getMinV() + sprite.getMaxV()) * 0.5f;
-		float lerpedMinU = MathHelper.lerp(delta, sprite.getMinU(), centerU);
-		float lerpedMaxU = MathHelper.lerp(delta, sprite.getMaxU(), centerU);
-		float lerpedMinV = MathHelper.lerp(delta, sprite.getMinV(), centerV);
-		float lerpedMaxV = MathHelper.lerp(delta, sprite.getMaxV(), centerV);
-		quad.uv(0, lerpedMinU, lerpedMinV);
-		quad.uv(1, lerpedMinU, lerpedMaxV);
-		quad.uv(2, lerpedMaxU, lerpedMaxV);
-		quad.uv(3, lerpedMaxU, lerpedMinV);
-	}
-
 	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, Sprite sprite, int color, @Nullable BlockRenderLayer renderLayer, TriState ao) {
 		emitter.square(face, 0, 0, 1, 1, 0);
 		emitter.color(color, color, color, color);
-		assignLerpedUvs(emitter, sprite);
+		emitter.spriteBake(sprite, MutableQuadView.BAKE_LOCK_UV);
 		emitter.renderLayer(renderLayer);
 		emitter.ambientOcclusion(ao);
 		emitter.emit();

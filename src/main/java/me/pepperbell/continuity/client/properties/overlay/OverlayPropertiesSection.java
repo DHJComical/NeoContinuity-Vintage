@@ -21,7 +21,7 @@ public class OverlayPropertiesSection {
 	protected int tintIndex = -1;
 	@Nullable
 	protected BlockState tintBlock;
-	protected BlockRenderLayer layer = BlockRenderLayer.CUTOUT_MIPPED;
+	protected BlockRenderLayer layer = BlockRenderLayer.CUTOUT;
 
 	public OverlayPropertiesSection(Properties properties, Identifier resourceId, String packId) {
 		this.properties = properties;
@@ -92,7 +92,6 @@ public class OverlayPropertiesSection {
 
 		String layerStr1 = layerStr.trim().toLowerCase(Locale.ROOT);
 		switch (layerStr1) {
-			case "cutout_mipped" -> layer = BlockRenderLayer.CUTOUT_MIPPED;
 			case "cutout" -> layer = BlockRenderLayer.CUTOUT;
 			case "translucent" -> layer = BlockRenderLayer.TRANSLUCENT;
 			default -> ContinuityClient.LOGGER.warn("Unknown 'layer' value '" + layerStr + " in file '" + resourceId + "' in pack '" + packId + "'");

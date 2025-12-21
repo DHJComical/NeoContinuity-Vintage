@@ -16,7 +16,7 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.BlockRenderLayers;
 import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.BlockPos;
@@ -112,15 +112,15 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 				BlockRenderLayer renderLayer = quad.renderLayer();
 				if (renderLayer == null) {
 					if (calculateDefaultLayer) {
-						isDefaultLayerSolid = RenderLayers.getBlockLayer(state) == BlockRenderLayer.SOLID;
+						isDefaultLayerSolid = BlockRenderLayers.getBlockLayer(state) == BlockRenderLayer.SOLID;
 						calculateDefaultLayer = false;
 					}
 
 					if (isDefaultLayerSolid) {
-						emitter.renderLayer(BlockRenderLayer.CUTOUT_MIPPED);
+						emitter.renderLayer(BlockRenderLayer.CUTOUT);
 					}
 				} else if (renderLayer == BlockRenderLayer.SOLID) {
-					emitter.renderLayer(BlockRenderLayer.CUTOUT_MIPPED);
+					emitter.renderLayer(BlockRenderLayer.CUTOUT);
 				}
 
 				QuadUtil.interpolate(emitter, sprite, emissiveSprite);

@@ -101,7 +101,6 @@ public final class CustomBlockLayers {
 	private enum BlockLayer {
 		SOLID(BlockRenderLayer.SOLID),
 		CUTOUT(BlockRenderLayer.CUTOUT),
-		CUTOUT_MIPPED(BlockRenderLayer.CUTOUT_MIPPED),
 		TRANSLUCENT(BlockRenderLayer.TRANSLUCENT);
 
 		public static final BlockLayer[] VALUES = values();
