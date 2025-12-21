@@ -43,9 +43,8 @@ import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.biome.BiomeHolderManager;
 import me.pepperbell.continuity.impl.client.ProcessingDataKeyRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resource.ResourceType;
@@ -71,8 +70,8 @@ public class ContinuityClient implements ClientModInitializer {
 		resourceLoader.registerReloader(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
 
 		FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
-			ResourceManagerHelper.registerBuiltinResourcePack(asId("default"), container, Text.translatable("resourcePack.continuity.default.name"), ResourcePackActivationType.NORMAL);
-			ResourceManagerHelper.registerBuiltinResourcePack(asId("glass_pane_culling_fix"), container, Text.translatable("resourcePack.continuity.glass_pane_culling_fix.name"), ResourcePackActivationType.NORMAL);
+			ResourceLoader.registerBuiltinPack(asId("default"), container, Text.translatable("resourcePack.continuity.default.name"), PackActivationType.NORMAL);
+			ResourceLoader.registerBuiltinPack(asId("glass_pane_culling_fix"), container, Text.translatable("resourcePack.continuity.glass_pane_culling_fix.name"), PackActivationType.NORMAL);
 		});
 
 		CtmLoaderRegistry registry = CtmLoaderRegistry.get();
