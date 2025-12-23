@@ -31,6 +31,10 @@ repositories {
 		name 'Shedaniel'
 		url 'https://maven.shedaniel.me'
 	}
+    maven {
+        name 'CaffeineMC'
+        url 'https://maven.caffeinemc.net/releases'
+    }
 }
 
 dependencies {
@@ -45,6 +49,9 @@ dependencies {
 	modImplementation("com.terraformersmc:modmenu:${modmenu_version}") {
 		exclude group: 'net.fabricmc.fabric-api'
 	}
+
+    modCompileOnly "net.caffeinemc:sodium-fabric-api:${sodium_version}"
+    // modRuntimeOnly "net.caffeinemc:sodium-fabric:${sodium_version}"
 }
 
 processResources {

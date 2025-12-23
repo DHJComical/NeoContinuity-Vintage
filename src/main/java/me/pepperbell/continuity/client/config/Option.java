@@ -7,6 +7,8 @@ import com.google.gson.JsonPrimitive;
 public interface Option<T> {
 	String getKey();
 
+	T getDefault();
+
 	T get();
 
 	void set(T value);
@@ -17,16 +19,23 @@ public interface Option<T> {
 
 	abstract class BaseOption<T> implements Option<T> {
 		protected final String key;
+		protected T defaultValue;
 		protected T value;
 
 		public BaseOption(String key, T defaultValue) {
 			this.key = key;
+			this.defaultValue = defaultValue;
 			value = defaultValue;
 		}
 
 		@Override
 		public String getKey() {
 			return key;
+		}
+
+		@Override
+		public T getDefault() {
+			return defaultValue;
 		}
 
 		@Override
