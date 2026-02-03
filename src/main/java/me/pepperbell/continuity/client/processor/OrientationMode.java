@@ -2,9 +2,9 @@ package me.pepperbell.continuity.client.processor;
 
 import me.pepperbell.continuity.client.util.QuadUtil;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public enum OrientationMode {
 	NONE,
@@ -21,8 +21,8 @@ public enum OrientationMode {
 		return switch (this) {
 			case NONE -> 0;
 			case STATE_AXIS -> {
-				if (state.contains(Properties.AXIS)) {
-					Direction.Axis axis = state.get(Properties.AXIS);
+				if (state.hasProperty(BlockStateProperties.AXIS)) {
+					Direction.Axis axis = state.getValue(BlockStateProperties.AXIS);
 					yield AXIS_ORIENTATIONS[axis.ordinal()][quad.lightFace().ordinal()];
 				} else {
 					yield 0;

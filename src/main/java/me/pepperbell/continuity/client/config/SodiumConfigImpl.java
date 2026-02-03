@@ -6,7 +6,7 @@ import net.caffeinemc.mods.sodium.api.config.option.OptionBinding;
 import net.caffeinemc.mods.sodium.api.config.option.OptionFlag;
 import net.caffeinemc.mods.sodium.api.config.structure.BooleanOptionBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.ConfigBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class SodiumConfigImpl implements ConfigEntryPoint {
 	@Override
@@ -16,7 +16,7 @@ public class SodiumConfigImpl implements ConfigEntryPoint {
 		builder.registerOwnModOptions()
 				.setNonTintedIcon(ContinuityClient.asId("icon.png"))
 				.addPage(builder.createOptionPage()
-						.setName(Text.translatable(ContinuityConfigScreen.getTranslationKey("title")))
+						.setName(Component.translatable(ContinuityConfigScreen.getTranslationKey("title")))
 						.addOption(asSodiumOption(builder, config, config.connectedTextures)
 								.setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD))
 						.addOption(asSodiumOption(builder, config, config.emissiveTextures)
@@ -27,12 +27,12 @@ public class SodiumConfigImpl implements ConfigEntryPoint {
 
 	private static BooleanOptionBuilder asSodiumOption(ConfigBuilder builder, ContinuityConfig config, Option.BooleanOption option) {
 		String translationKey = ContinuityConfigScreen.getTranslationKey(option.getKey());
-		Text text = Text.translatable(translationKey);
-		Text tooltipText = Text.translatable(ContinuityConfigScreen.getTooltipKey(translationKey));
+		Component component = Component.translatable(translationKey);
+		Component tooltipComponent = Component.translatable(ContinuityConfigScreen.getTooltipKey(translationKey));
 
 		return builder.createBooleanOption(ContinuityClient.asId(option.getKey()))
-				.setName(text)
-				.setTooltip(tooltipText)
+				.setName(component)
+				.setTooltip(tooltipComponent)
 				.setDefaultValue(option.getDefault())
 				.setBinding(new OptionBindingImpl<>(option))
 				.setStorageHandler(config::save);

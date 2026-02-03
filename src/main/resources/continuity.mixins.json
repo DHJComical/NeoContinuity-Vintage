@@ -4,12 +4,12 @@
   "package": "me.pepperbell.continuity.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "AtlasLoaderMixin",
     "AtlasManagerMixin",
-    "BlockRenderLayersMixin",
-    "LifecycledResourceManagerImplMixin",
+    "ItemBlockRenderTypesMixin",
+    "MultiPackResourceManagerMixin",
     "SpriteLoaderMixin",
-    "SpriteMixin"
+    "SpriteSourceListMixin",
+    "TextureAtlasSpriteMixin"
   ],
   "injectors": {
     "defaultRequire": 1

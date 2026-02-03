@@ -5,28 +5,28 @@ import org.jetbrains.annotations.Nullable;
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class FixedSpriteProvider implements SpriteProvider {
-	protected Sprite sprite;
+	protected TextureAtlasSprite sprite;
 
-	public FixedSpriteProvider(Sprite sprite) {
+	public FixedSpriteProvider(TextureAtlasSprite sprite) {
 		this.sprite = sprite;
 	}
 
 	@Override
 	@Nullable
-	public Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, ProcessingDataProvider dataProvider) {
+	public TextureAtlasSprite getSprite(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
 		return this.sprite;
 	}
 
 	public static class Factory implements SpriteProvider.Factory<BaseCtmProperties> {
 		@Override
-		public SpriteProvider createSpriteProvider(Sprite[] sprites, BaseCtmProperties properties) {
+		public SpriteProvider createSpriteProvider(TextureAtlasSprite[] sprites, BaseCtmProperties properties) {
 			return new FixedSpriteProvider(sprites[0]);
 		}
 

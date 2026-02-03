@@ -1,19 +1,19 @@
 package me.pepperbell.continuity.client.util;
 
-import net.minecraft.client.texture.MissingSprite;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.Identifier;
 
 public final class TextureUtil {
-	public static final SpriteIdentifier MISSING_SPRITE_ID = toSpriteId(MissingSprite.getMissingSpriteId());
+	public static final Material MISSING_MATERIAL = toMaterial(MissingTextureAtlasSprite.getLocation());
 
-	public static SpriteIdentifier toSpriteId(Identifier id) {
-		return new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, id);
+	public static Material toMaterial(Identifier id) {
+		return new Material(TextureAtlas.LOCATION_BLOCKS, id);
 	}
 
-	public static boolean isMissingSprite(Sprite sprite) {
-		return sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId());
+	public static boolean isMissingSprite(TextureAtlasSprite sprite) {
+		return sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation());
 	}
 }

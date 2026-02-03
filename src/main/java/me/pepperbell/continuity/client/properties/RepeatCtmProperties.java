@@ -5,9 +5,9 @@ import java.util.Properties;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public class RepeatCtmProperties extends BaseCtmProperties {
 	protected int width;
@@ -15,7 +15,7 @@ public class RepeatCtmProperties extends BaseCtmProperties {
 	protected Symmetry symmetry = Symmetry.NONE;
 	protected OrientationMode orientationMode = OrientationMode.NONE;
 
-	public RepeatCtmProperties(Properties properties, Identifier resourceId, ResourcePack pack, int packPriority, ResourceManager resourceManager, String method) {
+	public RepeatCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 	}
 

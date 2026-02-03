@@ -1,6 +1,6 @@
 package me.pepperbell.continuity.client.util;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public final class MathUtil {
 	// Borrowed from SplittableRandom
@@ -46,7 +46,7 @@ public final class MathUtil {
 	}
 
 	public static int mix(int x, int y, int z, int face, int loops) {
-		return mix32((MathHelper.hashCode(x, y, z) ^ mix64(GOLDEN_GAMMA * (1 + face))) + GOLDEN_GAMMA * (1 + loops));
+		return mix32((Mth.getSeed(x, y, z) ^ mix64(GOLDEN_GAMMA * (1 + face))) + GOLDEN_GAMMA * (1 + loops));
 	}
 
 	public static int removeSignBit(int value) {

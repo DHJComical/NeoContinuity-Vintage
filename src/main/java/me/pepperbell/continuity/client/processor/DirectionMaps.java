@@ -3,8 +3,8 @@ package me.pepperbell.continuity.client.processor;
 import org.apache.commons.lang3.ArrayUtils;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class DirectionMaps {
 	public static final Direction[][][] DIRECTION_MAPS = new Direction[6][8][];
@@ -20,10 +20,10 @@ public final class DirectionMaps {
 			}
 
 			Direction textureLeft;
-			if (face.getDirection() == Direction.AxisDirection.NEGATIVE) {
-				textureLeft = textureUp.rotateClockwise(face.getAxis());
+			if (face.getAxisDirection() == Direction.AxisDirection.NEGATIVE) {
+				textureLeft = textureUp.getClockWise(face.getAxis());
 			} else {
-				textureLeft = textureUp.rotateCounterclockwise(face.getAxis());
+				textureLeft = textureUp.getCounterClockWise(face.getAxis());
 			}
 
 			Direction[][] map = DIRECTION_MAPS[face.ordinal()];

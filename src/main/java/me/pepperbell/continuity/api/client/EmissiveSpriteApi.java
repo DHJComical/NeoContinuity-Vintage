@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.impl.client.EmissiveSpriteApiImpl;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 @ApiStatus.NonExtendable
 public interface EmissiveSpriteApi {
@@ -13,5 +13,5 @@ public interface EmissiveSpriteApi {
 	}
 
 	@Nullable
-	Sprite getEmissiveSprite(Sprite sprite);
+	TextureAtlasSprite getEmissiveSprite(TextureAtlasSprite sprite);
 }

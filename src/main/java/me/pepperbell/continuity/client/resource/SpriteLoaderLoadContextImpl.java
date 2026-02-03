@@ -7,8 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.resources.Identifier;
 
 public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 	private final CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture;
@@ -28,7 +28,7 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 	@Override
 	@Nullable
 	public SpriteLoaderLoadContext.EmissiveControl getEmissiveControl(Identifier atlasId) {
-		if (atlasId.equals(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE)) {
+		if (atlasId.equals(TextureAtlas.LOCATION_BLOCKS)) {
 			return blockAtlasEmissiveControl;
 		}
 		return null;

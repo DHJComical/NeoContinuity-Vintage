@@ -2,28 +2,28 @@ package me.pepperbell.continuity.client.processor;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class AbstractQuadProcessor implements QuadProcessor {
-	protected Sprite[] sprites;
+	protected TextureAtlasSprite[] sprites;
 	protected ProcessingPredicate processingPredicate;
 
-	public AbstractQuadProcessor(Sprite[] sprites, ProcessingPredicate processingPredicate) {
+	public AbstractQuadProcessor(TextureAtlasSprite[] sprites, ProcessingPredicate processingPredicate) {
 		this.sprites = sprites;
 		this.processingPredicate = processingPredicate;
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
-		if (!processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
+	public ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+		if (!processingPredicate.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, context)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
-		return processQuadInner(quad, sprite, blockView, pos, appearanceState, state, random, pass, context);
+		return processQuadInner(quad, sprite, level, pos, appearanceState, state, random, pass, context);
 	}
 
-	public abstract ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context);
+	public abstract ProcessingResult processQuadInner(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context);
 }

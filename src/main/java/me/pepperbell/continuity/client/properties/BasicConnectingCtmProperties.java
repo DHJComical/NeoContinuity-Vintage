@@ -6,19 +6,19 @@ import java.util.Properties;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.ConnectionPredicate;
 import me.pepperbell.continuity.client.util.SpriteCalculator;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class BasicConnectingCtmProperties extends BaseCtmProperties {
 	protected ConnectionPredicate connectionPredicate;
 
-	public BasicConnectingCtmProperties(Properties properties, Identifier resourceId, ResourcePack pack, int packPriority, ResourceManager resourceManager, String method) {
+	public BasicConnectingCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 	}
 
@@ -67,13 +67,13 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 	public enum ConnectionType implements ConnectionPredicate {
 		BLOCK {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
 				return appearanceState.getBlock() == otherAppearanceState.getBlock();
 			}
 		},
 		TILE {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
 				if (appearanceState == otherAppearanceState) {
 					return true;
 				}
@@ -82,7 +82,7 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 		},
 		STATE {
 			@Override
-			public boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite) {
+			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
 				return appearanceState == otherAppearanceState;
 			}
 		};

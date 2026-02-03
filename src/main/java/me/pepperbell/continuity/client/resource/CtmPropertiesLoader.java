@@ -22,12 +22,12 @@ import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.model.QuadProcessors;
 import me.pepperbell.continuity.client.util.biome.BiomeHolderManager;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public class CtmPropertiesLoader {
 	private final ResourceManager resourceManager;
@@ -56,9 +56,9 @@ public class CtmPropertiesLoader {
 
 	private LoadingResult loadAll() {
 		int packPriority = 0;
-		Iterator<ResourcePack> iterator = resourceManager.streamResourcePacks().iterator();
+		Iterator<PackResources> iterator = resourceManager.listPacks().iterator();
 		while (iterator.hasNext()) {
-			ResourcePack pack = iterator.next();
+			PackResources pack = iterator.next();
 			loadAll(pack, packPriority);
 			packPriority++;
 		}
@@ -68,48 +68,48 @@ public class CtmPropertiesLoader {
 		return new LoadingResult(containers, textureDependencies);
 	}
 
-	private void loadAll(ResourcePack pack, int packPriority) {
-		for (String namespace : pack.getNamespaces(ResourceType.CLIENT_RESOURCES)) {
-			pack.findResources(ResourceType.CLIENT_RESOURCES, namespace, "optifine/ctm", (resourceId, inputSupplier) -> {
+	private void loadAll(PackResources pack, int packPriority) {
+		for (String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
+			pack.listResources(PackType.CLIENT_RESOURCES, namespace, "optifine/ctm", (resourceId, inputSupplier) -> {
 				if (resourceId.getPath().endsWith(".properties")) {
 					try (InputStream stream = inputSupplier.get()) {
 						Properties properties = new Properties();
 						properties.load(stream);
 						load(properties, resourceId, pack, packPriority);
 					} catch (Exception e) {
-						ContinuityClient.LOGGER.error("Failed to load CTM properties from file '" + resourceId + "' in pack '" + pack.getId() + "'", e);
+						ContinuityClient.LOGGER.error("Failed to load CTM properties from file '" + resourceId + "' in pack '" + pack.packId() + "'", e);
 					}
 				}
 			});
 		}
 	}
 
-	private void load(Properties properties, Identifier resourceId, ResourcePack pack, int packPriority) {
+	private void load(Properties properties, Identifier resourceId, PackResources pack, int packPriority) {
 		String method = properties.getProperty("method", "ctm").trim();
 		CtmLoader<?> loader = CtmLoaderRegistry.get().getLoader(method);
 		if (loader != null) {
 			load(loader, properties, resourceId, pack, packPriority, method);
 		} else {
-			ContinuityClient.LOGGER.error("Unknown 'method' value '" + method + "' in file '" + resourceId + "' in pack '" + pack.getId() + "'");
+			ContinuityClient.LOGGER.error("Unknown 'method' value '" + method + "' in file '" + resourceId + "' in pack '" + pack.packId() + "'");
 		}
 	}
 
-	private <T extends CtmProperties> void load(CtmLoader<T> loader, Properties properties, Identifier resourceId, ResourcePack pack, int packPriority, String method) {
+	private <T extends CtmProperties> void load(CtmLoader<T> loader, Properties properties, Identifier resourceId, PackResources pack, int packPriority, String method) {
 		T ctmProperties = loader.getPropertiesFactory().createProperties(properties, resourceId, pack, packPriority, resourceManager, method);
 		if (ctmProperties != null) {
 			LoadingContainer<T> container = new LoadingContainer<>(loader, ctmProperties);
 			containers.add(container);
-			for (SpriteIdentifier spriteId : ctmProperties.getTextureDependencies()) {
-				Set<Identifier> atlasTextureDependencies = textureDependencies.computeIfAbsent(spriteId.getAtlasId(), id -> new ObjectOpenHashSet<>());
-				atlasTextureDependencies.add(spriteId.getTextureId());
+			for (Material spriteId : ctmProperties.getTextureDependencies()) {
+				Set<Identifier> atlasTextureDependencies = textureDependencies.computeIfAbsent(spriteId.atlasLocation(), id -> new ObjectOpenHashSet<>());
+				atlasTextureDependencies.add(spriteId.texture());
 			}
 		}
 	}
 
 	private record LoadingContainer<T extends CtmProperties>(CtmLoader<T> loader, T properties) implements Comparable<LoadingContainer<?>> {
-		public QuadProcessors.ProcessorHolder toProcessorHolder(Function<SpriteIdentifier, Sprite> textureGetter) {
-			QuadProcessor processor = loader.getProcessorFactory().createProcessor(properties, textureGetter);
-			CachingPredicates predicates = loader.getPredicatesFactory().createPredicates(properties, textureGetter);
+		public QuadProcessors.ProcessorHolder toProcessorHolder(Function<Material, TextureAtlasSprite> spriteGetter) {
+			QuadProcessor processor = loader.getProcessorFactory().createProcessor(properties, spriteGetter);
+			CachingPredicates predicates = loader.getPredicatesFactory().createPredicates(properties, spriteGetter);
 			return new QuadProcessors.ProcessorHolder(processor, predicates);
 		}
 
@@ -128,10 +128,10 @@ public class CtmPropertiesLoader {
 			this.textureDependencies = textureDependencies;
 		}
 
-		public List<QuadProcessors.ProcessorHolder> createProcessorHolders(Function<SpriteIdentifier, Sprite> textureGetter) {
+		public List<QuadProcessors.ProcessorHolder> createProcessorHolders(Function<Material, TextureAtlasSprite> spriteGetter) {
 			List<QuadProcessors.ProcessorHolder> processorHolders = new ObjectArrayList<>();
 			for (LoadingContainer<?> container : containers) {
-				processorHolders.add(container.toProcessorHolder(textureGetter));
+				processorHolders.add(container.toProcessorHolder(spriteGetter));
 			}
 			return processorHolders;
 		}

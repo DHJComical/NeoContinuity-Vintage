@@ -5,13 +5,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 public class ContinuityConfigScreen extends Screen {
 	private final Screen parent;
@@ -20,7 +20,7 @@ public class ContinuityConfigScreen extends Screen {
 	private List<Value<?>> values;
 
 	public ContinuityConfigScreen(Screen parent, ContinuityConfig config) {
-		super(Text.translatable(getTranslationKey("title")));
+		super(Component.translatable(getTranslationKey("title")));
 		this.parent = parent;
 		this.config = config;
 	}
@@ -33,37 +33,37 @@ public class ContinuityConfigScreen extends Screen {
 
 		values = List.of(connectedTextures, emissiveTextures, customBlockLayers);
 
-		addDrawableChild(startBooleanValueButton(connectedTextures)
-				.dimensions(width / 2 - 100 - 110, height / 2 - 10 - 12, 200, 20)
+		addRenderableWidget(startBooleanValueButton(connectedTextures)
+				.bounds(width / 2 - 100 - 110, height / 2 - 10 - 12, 200, 20)
 				.build());
-		addDrawableChild(startBooleanValueButton(emissiveTextures)
-				.dimensions(width / 2 - 100 + 110, height / 2 - 10 - 12, 200, 20)
+		addRenderableWidget(startBooleanValueButton(emissiveTextures)
+				.bounds(width / 2 - 100 + 110, height / 2 - 10 - 12, 200, 20)
 				.build());
-		addDrawableChild(startBooleanValueButton(customBlockLayers)
-				.dimensions(width / 2 - 100 - 110, height / 2 - 10 + 12, 200, 20)
+		addRenderableWidget(startBooleanValueButton(customBlockLayers)
+				.bounds(width / 2 - 100 - 110, height / 2 - 10 + 12, 200, 20)
 				.build());
 
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE,
+		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE,
 				button -> {
 					saveValues();
-					close();
+					onClose();
 				})
-				.dimensions(width / 2 - 75 - 79, height - 40, 150, 20)
+				.bounds(width / 2 - 75 - 79, height - 40, 150, 20)
 				.build());
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.CANCEL, button -> close())
-				.dimensions(width / 2 - 75 + 79, height - 40, 150, 20)
+		addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
+				.bounds(width / 2 - 75 + 79, height - 40, 150, 20)
 				.build());
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
-		context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 30, 0xFFFFFF);
+		context.drawCenteredString(font, title, width / 2, 30, 0xFFFFFF);
 	}
 
 	@Override
-	public void close() {
-		client.setScreen(parent);
+	public void onClose() {
+		minecraft.setScreen(parent);
 	}
 
 	private void saveValues() {
@@ -91,22 +91,22 @@ public class ContinuityConfigScreen extends Screen {
 		return translationKey + ".tooltip";
 	}
 
-	private ButtonWidget.Builder startBooleanValueButton(Value<Boolean> value) {
+	private Button.Builder startBooleanValueButton(Value<Boolean> value) {
 		String translationKey = getTranslationKey(value.getOption().getKey());
-		Text text = Text.translatable(translationKey);
-		Text tooltipText = Text.translatable(getTooltipKey(translationKey));
+		Component component = Component.translatable(translationKey);
+		Component tooltipComponent = Component.translatable(getTooltipKey(translationKey));
 
-		return ButtonWidget.builder(ScreenTexts.composeGenericOptionText(text, ScreenTexts.onOrOff(value.get())),
+		return Button.builder(CommonComponents.optionNameValue(component, CommonComponents.optionStatus(value.get())),
 				button -> {
 					boolean newValue = !value.get();
 					value.set(newValue);
-					Text valueText = ScreenTexts.onOrOff(newValue);
+					Component valueText = CommonComponents.optionStatus(newValue);
 					if (value.isChanged()) {
-						valueText = valueText.copy().styled(style -> style.withBold(true));
+						valueText = valueText.copy().withStyle(style -> style.withBold(true));
 					}
-					button.setMessage(ScreenTexts.composeGenericOptionText(text, valueText));
+					button.setMessage(CommonComponents.optionNameValue(component, valueText));
 				})
-				.tooltip(Tooltip.of(tooltipText));
+				.tooltip(Tooltip.create(tooltipComponent));
 	}
 
 	private static class Value<T> {
@@ -156,7 +156,7 @@ public class ContinuityConfigScreen extends Screen {
 			RELOAD_WORLD_RENDERER {
 				@Override
 				public void onSave() {
-					MinecraftClient.getInstance().worldRenderer.reload();
+					Minecraft.getInstance().levelRenderer.allChanged();
 				}
 			};
 

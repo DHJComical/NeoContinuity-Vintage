@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 public class ProcessingDataKeyImpl<T> implements ProcessingDataKey<T> {
 	protected final Identifier id;

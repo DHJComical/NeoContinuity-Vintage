@@ -1,6 +1,6 @@
 package me.pepperbell.continuity.client.processor;
 
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
 
 public enum Symmetry {
 	NONE,
@@ -9,7 +9,7 @@ public enum Symmetry {
 
 	public Direction apply(Direction face) {
 		if (this == Symmetry.OPPOSITE) {
-			if (face.getDirection() == Direction.AxisDirection.POSITIVE) {
+			if (face.getAxisDirection() == Direction.AxisDirection.POSITIVE) {
 				face = face.getOpposite();
 			}
 		} else if (this == Symmetry.ALL) {

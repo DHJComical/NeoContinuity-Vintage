@@ -6,16 +6,16 @@ import me.pepperbell.continuity.client.model.CtmBlockStateModel;
 import me.pepperbell.continuity.client.model.EmissiveBlockStateModel;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.client.model.loading.v1.PreparableModelLoadingPlugin;
-import net.minecraft.resource.ResourceReloader;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 
 public final class ModelWrappingHandler {
-	public static final ResourceReloader.Key<CompletableFuture<Boolean>> WRAP_CTM_FUTURE_KEY = new ResourceReloader.Key<>();
-	public static final ResourceReloader.Key<CompletableFuture<Boolean>> WRAP_EMISSIVE_FUTURE_KEY = new ResourceReloader.Key<>();
+	public static final PreparableReloadListener.StateKey<CompletableFuture<Boolean>> WRAP_CTM_FUTURE_KEY = new PreparableReloadListener.StateKey<>();
+	public static final PreparableReloadListener.StateKey<CompletableFuture<Boolean>> WRAP_EMISSIVE_FUTURE_KEY = new PreparableReloadListener.StateKey<>();
 
 	public static void init() {
 		PreparableModelLoadingPlugin.register((store, executor) -> {
-			CompletableFuture<Boolean> wrapCtmFuture = store.getOrThrow(WRAP_CTM_FUTURE_KEY);
-			CompletableFuture<Boolean> wrapEmissiveFuture = store.getOrThrow(WRAP_EMISSIVE_FUTURE_KEY);
+			CompletableFuture<Boolean> wrapCtmFuture = store.get(WRAP_CTM_FUTURE_KEY);
+			CompletableFuture<Boolean> wrapEmissiveFuture = store.get(WRAP_EMISSIVE_FUTURE_KEY);
 			return CompletableFuture.allOf(wrapCtmFuture, wrapEmissiveFuture).thenApplyAsync(v -> {
 				return new Data(wrapCtmFuture.join(), wrapEmissiveFuture.join());
 			}, executor);

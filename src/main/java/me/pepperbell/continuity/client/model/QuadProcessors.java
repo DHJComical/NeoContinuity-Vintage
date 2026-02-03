@@ -9,18 +9,18 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.pepperbell.continuity.api.client.CachingPredicates;
 import me.pepperbell.continuity.api.client.QuadProcessor;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class QuadProcessors {
 	private static ProcessorHolder[] processorHolders = new ProcessorHolder[0];
 	private static final BlockStateKeyCache CACHE = new BlockStateKeyCache();
 
-	public static Function<Sprite, Slice> getCache(BlockState state) {
+	public static Function<TextureAtlasSprite, Slice> getCache(BlockState state) {
 		return CACHE.apply(state);
 	}
 
-	private static Slice computeSlice(BlockState state, Sprite sprite) {
+	private static Slice computeSlice(BlockState state, TextureAtlasSprite sprite) {
 		List<QuadProcessor> processorList = new ObjectArrayList<>();
 		List<QuadProcessor> multipassProcessorList = new ObjectArrayList<>();
 
@@ -112,8 +112,8 @@ public final class QuadProcessors {
 		}
 	}
 
-	private static class SpriteKeyCache implements Function<Sprite, Slice> {
-		private final Reference2ReferenceOpenHashMap<Sprite, Slice> map = new Reference2ReferenceOpenHashMap<>(4, Hash.FAST_LOAD_FACTOR);
+	private static class SpriteKeyCache implements Function<TextureAtlasSprite, Slice> {
+		private final Reference2ReferenceOpenHashMap<TextureAtlasSprite, Slice> map = new Reference2ReferenceOpenHashMap<>(4, Hash.FAST_LOAD_FACTOR);
 		private final StampedLock lock = new StampedLock();
 		private final BlockState state;
 
@@ -122,7 +122,7 @@ public final class QuadProcessors {
 		}
 
 		@Override
-		public Slice apply(Sprite sprite) {
+		public Slice apply(TextureAtlasSprite sprite) {
 			Slice slice;
 
 			long optimisticReadStamp = lock.tryOptimisticRead();

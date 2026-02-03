@@ -5,16 +5,16 @@ import java.util.Properties;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public interface CtmProperties extends Comparable<CtmProperties> {
-	Collection<SpriteIdentifier> getTextureDependencies();
+	Collection<Material> getTextureDependencies();
 
 	interface Factory<T extends CtmProperties> {
 		@Nullable
-		T createProperties(Properties properties, Identifier resourceId, ResourcePack pack, int packPriority, ResourceManager resourceManager, String method);
+		T createProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method);
 	}
 }

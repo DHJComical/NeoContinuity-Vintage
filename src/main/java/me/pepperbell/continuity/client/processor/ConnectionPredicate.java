@@ -1,25 +1,25 @@
 package me.pepperbell.continuity.client.processor;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public interface ConnectionPredicate {
-	boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, Sprite quadSprite);
+	boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite);
 
-	default boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, Direction face, Sprite quadSprite) {
-		BlockState otherState = blockView.getBlockState(otherPos);
-		BlockState otherAppearanceState = otherState.getAppearance(blockView, otherPos, face, state, pos);
-		return shouldConnect(blockView, pos, appearanceState, state, otherPos, otherAppearanceState, otherState, face, quadSprite);
+	default boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, Direction face, TextureAtlasSprite quadSprite) {
+		BlockState otherState = level.getBlockState(otherPos);
+		BlockState otherAppearanceState = otherState.getAppearance(level, otherPos, face, state, pos);
+		return shouldConnect(level, pos, appearanceState, state, otherPos, otherAppearanceState, otherState, face, quadSprite);
 	}
 
-	default boolean shouldConnect(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos.Mutable otherPos, Direction face, Sprite quadSprite, boolean innerSeams) {
-		if (shouldConnect(blockView, pos, appearanceState, state, otherPos, face, quadSprite)) {
+	default boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos.MutableBlockPos otherPos, Direction face, TextureAtlasSprite quadSprite, boolean innerSeams) {
+		if (shouldConnect(level, pos, appearanceState, state, otherPos, face, quadSprite)) {
 			if (innerSeams) {
 				otherPos.move(face);
-				return !shouldConnect(blockView, pos, appearanceState, state, otherPos, face, quadSprite);
+				return !shouldConnect(level, pos, appearanceState, state, otherPos, face, quadSprite);
 			} else {
 				return true;
 			}

@@ -47,9 +47,9 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
 
 public class ContinuityClient implements ClientModInitializer {
 	public static final String ID = "continuity";
@@ -63,15 +63,15 @@ public class ContinuityClient implements ClientModInitializer {
 		ProcessingDataKeys.init();
 		ModelWrappingHandler.init();
 
-		ResourceLoader resourceLoader = ResourceLoader.get(ResourceType.CLIENT_RESOURCES);
+		ResourceLoader resourceLoader = ResourceLoader.get(PackType.CLIENT_RESOURCES);
 		resourceLoader.registerReloader(RenderUtil.ReloadListener.ID, RenderUtil.ReloadListener.INSTANCE);
 		resourceLoader.addReloaderOrdering(ResourceReloaderKeys.Client.ATLAS, RenderUtil.ReloadListener.ID);
 		resourceLoader.registerReloader(CustomBlockLayers.ReloadListener.ID, CustomBlockLayers.ReloadListener.INSTANCE);
 		resourceLoader.registerReloader(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
 
 		FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
-			ResourceLoader.registerBuiltinPack(asId("default"), container, Text.translatable("resourcePack.continuity.default.name"), PackActivationType.NORMAL);
-			ResourceLoader.registerBuiltinPack(asId("glass_pane_culling_fix"), container, Text.translatable("resourcePack.continuity.glass_pane_culling_fix.name"), PackActivationType.NORMAL);
+			ResourceLoader.registerBuiltinPack(asId("default"), container, Component.translatable("resourcePack.continuity.default.name"), PackActivationType.NORMAL);
+			ResourceLoader.registerBuiltinPack(asId("glass_pane_culling_fix"), container, Component.translatable("resourcePack.continuity.glass_pane_culling_fix.name"), PackActivationType.NORMAL);
 		});
 
 		CtmLoaderRegistry registry = CtmLoaderRegistry.get();
@@ -275,6 +275,6 @@ public class ContinuityClient implements ClientModInitializer {
 	}
 
 	public static Identifier asId(String path) {
-		return Identifier.of(ID, path);
+		return Identifier.fromNamespaceAndPath(ID, path);
 	}
 }

@@ -13,19 +13,19 @@ import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockState
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BlockStateModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CtmBlockStateModel extends WrapperBlockStateModel {
 	public static final int PASSES = 4;
 
 	protected final BlockState defaultState;
-	protected volatile Function<Sprite, QuadProcessors.Slice> defaultSliceFunc;
+	protected volatile Function<TextureAtlasSprite, QuadProcessors.Slice> defaultSliceFunc;
 
 	public CtmBlockStateModel(BlockStateModel wrapped, BlockState defaultState) {
 		super(wrapped);
@@ -33,21 +33,21 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 	}
 
 	@Override
-	public void emitQuads(QuadEmitter emitter, BlockRenderView blockView, BlockPos pos, BlockState state, Random random, Predicate<@Nullable Direction> cullTest) {
+	public void emitQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
 		if (!ContinuityConfig.INSTANCE.connectedTextures.get()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
 		ModelObjectsContainer container = ModelObjectsContainer.get();
 		if (!container.featureStates.getConnectedTexturesState().isEnabled()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
 		CtmQuadTransform quadTransform = container.ctmQuadTransform;
 		if (quadTransform.isActive()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
@@ -61,14 +61,14 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 		// Additionally, the side is chosen to always be the first constant of the enum (DOWN) for simplicity. Querying
 		// the appearance for all six sides would be more correct, but less efficient. This may be fixed in the future,
 		// especially if there is an actual use case for it.
-		BlockState appearanceState = state.getAppearance(blockView, pos, Direction.DOWN, state, pos);
+		BlockState appearanceState = state.getAppearance(level, pos, Direction.DOWN, state, pos);
 
 		// It would be better to use random.nextLong() as the seed, but that changes the state of the random, which
 		// cannot happen.
-		quadTransform.prepare(blockView, pos, appearanceState, state, state.getRenderingSeed(pos), cullTest, getSliceFunc(appearanceState));
+		quadTransform.prepare(level, pos, appearanceState, state, state.getSeed(pos), cullTest, getSliceFunc(appearanceState));
 
 		emitter.pushTransform(quadTransform);
-		super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+		super.emitQuads(emitter, level, pos, state, random, cullTest);
 		emitter.popTransform();
 
 		quadTransform.processingContext.outputTo(emitter);
@@ -77,19 +77,19 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 
 	@Override
 	@Nullable
-	public Object createGeometryKey(BlockRenderView blockView, BlockPos pos, BlockState state, Random random) {
+	public Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
 		if (!ContinuityConfig.INSTANCE.connectedTextures.get()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
 		ModelObjectsContainer container = ModelObjectsContainer.get();
 		if (!container.featureStates.getConnectedTexturesState().isEnabled()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
 		CtmQuadTransform quadTransform = container.ctmQuadTransform;
 		if (quadTransform.isActive()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
 		// This would be nice to implement, but it's not as important as for a typical model since this CTM wrapper is
@@ -97,9 +97,9 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 		return null;
 	}
 
-	protected Function<Sprite, QuadProcessors.Slice> getSliceFunc(BlockState state) {
+	protected Function<TextureAtlasSprite, QuadProcessors.Slice> getSliceFunc(BlockState state) {
 		if (state == defaultState) {
-			Function<Sprite, QuadProcessors.Slice> sliceFunc = defaultSliceFunc;
+			Function<TextureAtlasSprite, QuadProcessors.Slice> sliceFunc = defaultSliceFunc;
 			if (sliceFunc == null) {
 				synchronized (this) {
 					sliceFunc = defaultSliceFunc;
@@ -116,15 +116,15 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 
 	protected static class CtmQuadTransform implements QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
-		protected final Random random = Random.createLocal();
+		protected final RandomSource random = RandomSource.createNewThreadLocalInstance();
 
-		protected BlockRenderView blockView;
+		protected BlockAndTintGetter level;
 		protected BlockPos pos;
 		protected BlockState appearanceState;
 		protected BlockState state;
 		protected long randomSeed;
 		protected Predicate<@Nullable Direction> cullTest;
-		protected Function<Sprite, QuadProcessors.Slice> sliceFunc;
+		protected Function<TextureAtlasSprite, QuadProcessors.Slice> sliceFunc;
 
 		protected boolean active;
 
@@ -145,12 +145,12 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 		}
 
 		protected Boolean transformOnce(MutableQuadView quad, int pass) {
-			Sprite sprite = RenderUtil.getSpriteFinder().find(quad);
+			TextureAtlasSprite sprite = RenderUtil.getSpriteFinder().find(quad);
 			QuadProcessors.Slice slice = sliceFunc.apply(sprite);
 			QuadProcessor[] processors = pass == 0 ? slice.processors() : slice.multipassProcessors();
 			for (QuadProcessor processor : processors) {
 				random.setSeed(randomSeed);
-				QuadProcessor.ProcessingResult result = processor.processQuad(quad, sprite, blockView, pos, appearanceState, state, random, pass, processingContext);
+				QuadProcessor.ProcessingResult result = processor.processQuad(quad, sprite, level, pos, appearanceState, state, random, pass, processingContext);
 				if (result == QuadProcessor.ProcessingResult.NEXT_PROCESSOR) {
 					continue;
 				}
@@ -171,8 +171,8 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 			return active;
 		}
 
-		public void prepare(BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, long randomSeed, Predicate<@Nullable Direction> cullTest, Function<Sprite, QuadProcessors.Slice> sliceFunc) {
-			this.blockView = blockView;
+		public void prepare(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, long randomSeed, Predicate<@Nullable Direction> cullTest, Function<TextureAtlasSprite, QuadProcessors.Slice> sliceFunc) {
+			this.level = level;
 			this.pos = pos;
 			this.appearanceState = appearanceState;
 			this.state = state;
@@ -184,7 +184,7 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 		}
 
 		public void reset() {
-			blockView = null;
+			level = null;
 			pos = null;
 			appearanceState = null;
 			state = null;

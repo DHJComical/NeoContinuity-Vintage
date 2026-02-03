@@ -1,6 +1,6 @@
 package me.pepperbell.continuity.client.resource;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 public final class ResourceRedirectHandler {
 	public static final String SPRITE_PATH_START = "continuity_reserved/";

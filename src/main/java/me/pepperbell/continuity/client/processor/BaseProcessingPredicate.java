@@ -9,15 +9,15 @@ import org.jetbrains.annotations.Nullable;
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Nameable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.Nameable;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class BaseProcessingPredicate implements ProcessingPredicate {
 	@Nullable
@@ -37,7 +37,7 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 	}
 
 	@Override
-	public boolean shouldProcessQuad(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
+	public boolean shouldProcessQuad(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
 		if (heightPredicate != null) {
 			if (!heightPredicate.test(pos.getY())) {
 				return false;
@@ -45,12 +45,12 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 		}
 		if (faces != null) {
 			Direction face = quad.lightFace();
- 			if (appearanceState.contains(Properties.AXIS)) {
- 				Direction.Axis axis = appearanceState.get(Properties.AXIS);
+ 			if (appearanceState.hasProperty(BlockStateProperties.AXIS)) {
+ 				Direction.Axis axis = appearanceState.getValue(BlockStateProperties.AXIS);
  				if (axis == Direction.Axis.X) {
- 					face = face.rotateClockwise(Direction.Axis.Z);
+ 					face = face.getClockWise(Direction.Axis.Z);
 				} else if (axis == Direction.Axis.Z) {
-					face = face.rotateCounterclockwise(Direction.Axis.X);
+					face = face.getCounterClockWise(Direction.Axis.X);
 				}
 			}
 			if (!faces.contains(face)) {
@@ -58,13 +58,13 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 			}
 		}
 		if (biomePredicate != null) {
-			Biome biome = dataProvider.getData(ProcessingDataKeys.BIOME_CACHE).get(blockView, pos);
+			Biome biome = dataProvider.getData(ProcessingDataKeys.BIOME_CACHE).get(level, pos);
 			if (biome == null || !biomePredicate.test(biome)) {
 				return false;
 			}
 		}
 		if (blockEntityNamePredicate != null) {
-			String blockEntityName = dataProvider.getData(ProcessingDataKeys.BLOCK_ENTITY_NAME_CACHE).get(blockView, pos);
+			String blockEntityName = dataProvider.getData(ProcessingDataKeys.BLOCK_ENTITY_NAME_CACHE).get(level, pos);
 			if (blockEntityName == null || !blockEntityNamePredicate.test(blockEntityName)) {
 				return false;
 			}
@@ -82,9 +82,9 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 		protected boolean invalid = true;
 
 		@Nullable
-		public Biome get(BlockRenderView blockView, BlockPos pos) {
+		public Biome get(BlockAndTintGetter level, BlockPos pos) {
 			if (invalid) {
-				biome = blockView.hasBiomes() ? blockView.getBiomeFabric(pos).value() : null;
+				biome = level.hasBiomes() ? level.getBiomeFabric(pos).value() : null;
 				invalid = false;
 			}
 			return biome;
@@ -101,9 +101,9 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 		protected boolean invalid = true;
 
 		@Nullable
-		public String get(BlockRenderView blockView, BlockPos pos) {
+		public String get(BlockAndTintGetter level, BlockPos pos) {
 			if (invalid) {
-				BlockEntity blockEntity = blockView.getBlockEntity(pos);
+				BlockEntity blockEntity = level.getBlockEntity(pos);
 				if (blockEntity instanceof Nameable nameable) {
 					if (nameable.hasCustomName()) {
 						blockEntityName = nameable.getCustomName().getString();

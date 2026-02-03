@@ -18,34 +18,34 @@ import me.pepperbell.continuity.client.resource.EmissiveSuffixLoader;
 import me.pepperbell.continuity.client.resource.ModelWrappingHandler;
 import me.pepperbell.continuity.client.resource.SpriteLoaderLoadContext;
 import me.pepperbell.continuity.client.resource.SpriteLoaderLoadContextImpl;
-import net.minecraft.client.texture.AtlasManager;
-import net.minecraft.resource.ResourceReloader;
-import net.minecraft.util.Atlases;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 
 @Mixin(AtlasManager.class)
 abstract class AtlasManagerMixin {
-	@Inject(method = "prepareSharedState(Lnet/minecraft/resource/ResourceReloader$Store;)V", at = @At("RETURN"))
-	private void continuity$onReturnPrepareSharedState(ResourceReloader.Store store, CallbackInfo ci) {
-		store.put(ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY, new CompletableFuture<>());
+	@Inject(method = "prepareSharedState(Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;)V", at = @At("RETURN"))
+	private void continuity$onReturnPrepareSharedState(PreparableReloadListener.SharedState currentReload, CallbackInfo ci) {
+		currentReload.set(ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY, new CompletableFuture<>());
 	}
 
-	@Inject(method = "reload(Lnet/minecraft/resource/ResourceReloader$Store;Ljava/util/concurrent/Executor;Lnet/minecraft/resource/ResourceReloader$Synchronizer;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Lnet/minecraft/resource/ResourceReloader$Store;getResourceManager()Lnet/minecraft/resource/ResourceManager;"))
-	private void continuity$onHeadReload(ResourceReloader.Store store, Executor prepareExecutor, ResourceReloader.Synchronizer synchronizer, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir, @Local AtlasManager.Stitch stitch) {
-		EmissiveSuffixLoader.load(store.getResourceManager());
-		CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture = store.getOrThrow(CtmResourceReloader.ALL_EXTRA_IDS_FUTURE_KEY);
-		CompletableFuture<Boolean> wrapEmissiveFuture = store.getOrThrow(ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY);
+	@Inject(method = "reload(Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;Ljava/util/concurrent/Executor;Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;resourceManager()Lnet/minecraft/server/packs/resources/ResourceManager;"))
+	private void continuity$onHeadReload(PreparableReloadListener.SharedState currentReload, Executor prepareExecutor, PreparableReloadListener.PreparationBarrier preparationBarrier, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir, @Local AtlasManager.PendingStitchResults stitchResults) {
+		EmissiveSuffixLoader.load(currentReload.resourceManager());
+		CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture = currentReload.get(CtmResourceReloader.ALL_EXTRA_IDS_FUTURE_KEY);
+		CompletableFuture<Boolean> wrapEmissiveFuture = currentReload.get(ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY);
 
 		// This shouldn't be necessary, but it prevents a deadlock if for whatever reason the future isn't completed
 		// before this.
-		stitch.getPreparations(Atlases.BLOCKS).whenComplete((stitchResult, t) -> {
+		stitchResults.get(AtlasIds.BLOCKS).whenComplete((preparations, t) -> {
 			wrapEmissiveFuture.complete(false);
 		});
 
 		SpriteLoaderLoadContext.THREAD_LOCAL.set(new SpriteLoaderLoadContextImpl(allExtraIdsFuture, wrapEmissiveFuture));
 	}
 
-	@Inject(method = "reload(Lnet/minecraft/resource/ResourceReloader$Store;Ljava/util/concurrent/Executor;Lnet/minecraft/resource/ResourceReloader$Synchronizer;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At("RETURN"))
+	@Inject(method = "reload(Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;Ljava/util/concurrent/Executor;Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At("RETURN"))
 	private void continuity$onReturnReload(CallbackInfoReturnable<CompletableFuture<Void>> cir) {
 		SpriteLoaderLoadContext.THREAD_LOCAL.set(null);
 	}

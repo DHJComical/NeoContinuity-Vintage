@@ -6,18 +6,18 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 
 public final class QuadUtil {
-	public static void interpolate(MutableQuadView quad, Sprite oldSprite, Sprite newSprite) {
-		float oldMinU = oldSprite.getMinU();
-		float oldMinV = oldSprite.getMinV();
-		float newMinU = newSprite.getMinU();
-		float newMinV = newSprite.getMinV();
-		float uFactor = (newSprite.getMaxU() - newMinU) / (oldSprite.getMaxU() - oldMinU);
-		float vFactor = (newSprite.getMaxV() - newMinV) / (oldSprite.getMaxV() - oldMinV);
+	public static void interpolate(MutableQuadView quad, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
+		float oldMinU = oldSprite.getU0();
+		float oldMinV = oldSprite.getV0();
+		float newMinU = newSprite.getU0();
+		float newMinV = newSprite.getV0();
+		float uFactor = (newSprite.getU1() - newMinU) / (oldSprite.getU1() - oldMinU);
+		float vFactor = (newSprite.getV1() - newMinV) / (oldSprite.getV1() - oldMinV);
 		for (int i = 0; i < 4; i++) {
 			quad.uv(i,
 					newMinU + (quad.u(i) - oldMinU) * uFactor,
@@ -26,7 +26,7 @@ public final class QuadUtil {
 		}
 	}
 
-	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, Sprite sprite, int color, @Nullable BlockRenderLayer renderLayer, TriState ao) {
+	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, TextureAtlasSprite sprite, int color, @Nullable ChunkSectionLayer renderLayer, TriState ao) {
 		emitter.square(face, 0, 0, 1, 1, 0);
 		emitter.color(color, color, color, color);
 		emitter.spriteBake(sprite, MutableQuadView.BAKE_LOCK_UV);

@@ -14,15 +14,15 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.BlockRenderLayers;
-import net.minecraft.client.render.model.BlockStateModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 	public EmissiveBlockStateModel(BlockStateModel wrapped) {
@@ -30,21 +30,21 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 	}
 
 	@Override
-	public void emitQuads(QuadEmitter emitter, BlockRenderView blockView, BlockPos pos, BlockState state, Random random, Predicate<@Nullable Direction> cullTest) {
+	public void emitQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
 		if (!ContinuityConfig.INSTANCE.emissiveTextures.get()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
 		ModelObjectsContainer container = ModelObjectsContainer.get();
 		if (!container.featureStates.getEmissiveTexturesState().isEnabled()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
 		EmissiveQuadTransform quadTransform = container.emissiveQuadTransform;
 		if (quadTransform.isActive()) {
-			super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+			super.emitQuads(emitter, level, pos, state, random, cullTest);
 			return;
 		}
 
@@ -52,7 +52,7 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 		quadTransform.prepare(mutableMesh.emitter(), state, cullTest);
 
 		emitter.pushTransform(quadTransform);
-		super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+		super.emitQuads(emitter, level, pos, state, random, cullTest);
 		emitter.popTransform();
 
 		mutableMesh.outputTo(emitter);
@@ -62,22 +62,22 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 
 	@Override
 	@Nullable
-	public Object createGeometryKey(BlockRenderView blockView, BlockPos pos, BlockState state, Random random) {
+	public Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
 		if (!ContinuityConfig.INSTANCE.emissiveTextures.get()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
 		ModelObjectsContainer container = ModelObjectsContainer.get();
 		if (!container.featureStates.getEmissiveTexturesState().isEnabled()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
 		EmissiveQuadTransform quadTransform = container.emissiveQuadTransform;
 		if (quadTransform.isActive()) {
-			return super.createGeometryKey(blockView, pos, state, random);
+			return super.createGeometryKey(level, pos, state, random);
 		}
 
-		Object subkey = super.createGeometryKey(blockView, pos, state, random);
+		Object subkey = super.createGeometryKey(level, pos, state, random);
 		if (subkey == null) {
 			return null;
 		}
@@ -103,24 +103,24 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 				return false;
 			}
 
-			Sprite sprite = RenderUtil.getSpriteFinder().find(quad);
-			Sprite emissiveSprite = EmissiveSpriteApi.get().getEmissiveSprite(sprite);
+			TextureAtlasSprite sprite = RenderUtil.getSpriteFinder().find(quad);
+			TextureAtlasSprite emissiveSprite = EmissiveSpriteApi.get().getEmissiveSprite(sprite);
 			if (emissiveSprite != null) {
 				emitter.copyFrom(quad);
 				emitter.emissive(true).diffuseShade(false).ambientOcclusion(TriState.FALSE);
 
-				BlockRenderLayer renderLayer = quad.renderLayer();
+				ChunkSectionLayer renderLayer = quad.renderLayer();
 				if (renderLayer == null) {
 					if (calculateDefaultLayer) {
-						isDefaultLayerSolid = BlockRenderLayers.getBlockLayer(state) == BlockRenderLayer.SOLID;
+						isDefaultLayerSolid = ItemBlockRenderTypes.getChunkRenderType(state) == ChunkSectionLayer.SOLID;
 						calculateDefaultLayer = false;
 					}
 
 					if (isDefaultLayerSolid) {
-						emitter.renderLayer(BlockRenderLayer.CUTOUT);
+						emitter.renderLayer(ChunkSectionLayer.CUTOUT);
 					}
-				} else if (renderLayer == BlockRenderLayer.SOLID) {
-					emitter.renderLayer(BlockRenderLayer.CUTOUT);
+				} else if (renderLayer == ChunkSectionLayer.SOLID) {
+					emitter.renderLayer(ChunkSectionLayer.CUTOUT);
 				}
 
 				QuadUtil.interpolate(emitter, sprite, emissiveSprite);

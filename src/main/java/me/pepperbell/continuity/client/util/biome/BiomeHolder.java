@@ -5,9 +5,9 @@ import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.biome.Biome;
 
 public final class BiomeHolder {
 	private final Identifier id;
@@ -32,8 +32,8 @@ public final class BiomeHolder {
 		if (id == null) {
 			id = this.id;
 		}
-		if (biomeRegistry.containsId(id)) {
-			biome = biomeRegistry.get(id);
+		if (biomeRegistry.containsKey(id)) {
+			biome = biomeRegistry.getValue(id);
 		} else {
 			ContinuityClient.LOGGER.warn("Unknown biome '" + this.id + "'");
 		}

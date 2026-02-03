@@ -4,15 +4,15 @@ import java.util.function.Function;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public interface QuadProcessor {
-	ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context);
+	ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context);
 
 	interface ProcessingContext extends ProcessingDataProvider {
 		QuadEmitter getExtraQuadEmitter();
@@ -26,6 +26,6 @@ public interface QuadProcessor {
 	}
 
 	interface Factory<T extends CtmProperties> {
-		QuadProcessor createProcessor(T properties, Function<SpriteIdentifier, Sprite> textureGetter);
+		QuadProcessor createProcessor(T properties, Function<Material, TextureAtlasSprite> spriteGetter);
 	}
 }

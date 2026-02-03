@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.impl.client.ProcessingDataKeyRegistryImpl;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 @ApiStatus.NonExtendable
 public interface ProcessingDataKeyRegistry {

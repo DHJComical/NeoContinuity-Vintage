@@ -9,12 +9,12 @@ import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.properties.OrientedConnectingCtmProperties;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CtmSpriteProvider implements SpriteProvider {
 	// Indices for this array are formed from these bit values:
@@ -40,12 +40,12 @@ public class CtmSpriteProvider implements SpriteProvider {
 			37, 38, 37, 38, 30, 11, 30, 32, 37, 38, 37, 38, 25, 33, 25, 26,
 	};
 
-	protected Sprite[] sprites;
+	protected TextureAtlasSprite[] sprites;
 	protected ConnectionPredicate connectionPredicate;
 	protected boolean innerSeams;
 	protected OrientationMode orientationMode;
 
-	public CtmSpriteProvider(Sprite[] sprites, ConnectionPredicate connectionPredicate, boolean innerSeams, OrientationMode orientationMode) {
+	public CtmSpriteProvider(TextureAtlasSprite[] sprites, ConnectionPredicate connectionPredicate, boolean innerSeams, OrientationMode orientationMode) {
 		this.sprites = sprites;
 		this.connectionPredicate = connectionPredicate;
 		this.innerSeams = innerSeams;
@@ -54,18 +54,18 @@ public class CtmSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public Sprite getSprite(QuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, ProcessingDataProvider dataProvider) {
+	public TextureAtlasSprite getSprite(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
 		Direction[] directions = DirectionMaps.getDirections(orientationMode, quad, appearanceState);
-		BlockPos.Mutable mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = getConnections(directions, connectionPredicate, innerSeams, mutablePos, blockView, pos, appearanceState, state, quad.lightFace(), sprite);
+		BlockPos.MutableBlockPos mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS);
+		int connections = getConnections(directions, connectionPredicate, innerSeams, mutablePos, level, pos, appearanceState, state, quad.lightFace(), sprite);
 		return sprites[SPRITE_INDEX_MAP[connections]];
 	}
 
-	public static int getConnections(Direction[] directions, ConnectionPredicate connectionPredicate, boolean innerSeams, BlockPos.Mutable mutablePos, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Direction face, Sprite quadSprite) {
+	public static int getConnections(Direction[] directions, ConnectionPredicate connectionPredicate, boolean innerSeams, BlockPos.MutableBlockPos mutablePos, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, Direction face, TextureAtlasSprite quadSprite) {
 		int connections = 0;
 		for (int i = 0; i < 4; i++) {
-			mutablePos.set(pos, directions[i]);
-			if (connectionPredicate.shouldConnect(blockView, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
+			mutablePos.setWithOffset(pos, directions[i]);
+			if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
 				connections |= 1 << (i * 2);
 			}
 		}
@@ -73,8 +73,8 @@ public class CtmSpriteProvider implements SpriteProvider {
 			int index1 = i;
 			int index2 = (i + 1) % 4;
 			if (((connections >>> index1 * 2) & 1) == 1 && ((connections >>> index2 * 2) & 1) == 1) {
-				mutablePos.set(pos, directions[index1]).move(directions[index2]);
-				if (connectionPredicate.shouldConnect(blockView, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
+				mutablePos.setWithOffset(pos, directions[index1]).move(directions[index2]);
+				if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
 					connections |= 1 << (i * 2 + 1);
 				}
 			}
@@ -84,7 +84,7 @@ public class CtmSpriteProvider implements SpriteProvider {
 
 	public static class Factory implements SpriteProvider.Factory<OrientedConnectingCtmProperties> {
 		@Override
-		public SpriteProvider createSpriteProvider(Sprite[] sprites, OrientedConnectingCtmProperties properties) {
+		public SpriteProvider createSpriteProvider(TextureAtlasSprite[] sprites, OrientedConnectingCtmProperties properties) {
 			return new CtmSpriteProvider(sprites, properties.getConnectionPredicate(), properties.getInnerSeams(), properties.getOrientationMode());
 		}
 

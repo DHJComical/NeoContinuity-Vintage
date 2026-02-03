@@ -13,21 +13,21 @@ import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.TextureUtil;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 	protected int tintIndex;
 	@Nullable
 	protected BlockState tintBlock;
-	protected BlockRenderLayer layer;
+	protected ChunkSectionLayer layer;
 	protected TriState ao;
 
-	public SimpleOverlayQuadProcessor(SpriteProvider spriteProvider, ProcessingPredicate processingPredicate, int tintIndex, @Nullable BlockState tintBlock, BlockRenderLayer layer) {
+	public SimpleOverlayQuadProcessor(SpriteProvider spriteProvider, ProcessingPredicate processingPredicate, int tintIndex, @Nullable BlockState tintBlock, ChunkSectionLayer layer) {
 		super(spriteProvider, processingPredicate);
 		this.tintIndex = tintIndex;
 		this.tintBlock = tintBlock;
@@ -36,11 +36,11 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
-		if (processingPredicate.shouldProcessQuad(quad, sprite, blockView, pos, appearanceState, state, context)) {
-			Sprite newSprite = spriteProvider.getSprite(quad, sprite, blockView, pos, appearanceState, state, random, context);
+	public ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+		if (processingPredicate.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, context)) {
+			TextureAtlasSprite newSprite = spriteProvider.getSprite(quad, sprite, level, pos, appearanceState, state, random, context);
 			if (newSprite != null && !TextureUtil.isMissingSprite(newSprite)) {
-				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, blockView, pos, tintIndex), layer, ao);
+				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, level, pos, tintIndex), layer, ao);
 			}
 		}
 		return ProcessingResult.NEXT_PROCESSOR;
@@ -52,7 +52,7 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 		}
 
 		@Override
-		public QuadProcessor createProcessor(T properties, Sprite[] sprites) {
+		public QuadProcessor createProcessor(T properties, TextureAtlasSprite[] sprites) {
 			OverlayPropertiesSection overlaySection = properties.getOverlayPropertiesSection();
 			return new SimpleOverlayQuadProcessor(spriteProviderFactory.createSpriteProvider(sprites, properties), OverlayProcessingPredicate.fromProperties(properties), overlaySection.getTintIndex(), overlaySection.getTintBlock(), overlaySection.getLayer());
 		}

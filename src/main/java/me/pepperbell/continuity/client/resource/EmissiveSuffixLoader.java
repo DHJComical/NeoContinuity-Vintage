@@ -8,12 +8,12 @@ import java.util.Properties;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public final class EmissiveSuffixLoader {
-	public static final Identifier LOCATION = Identifier.ofVanilla("optifine/emissive.properties");
+	public static final Identifier LOCATION = Identifier.withDefaultNamespace("optifine/emissive.properties");
 
 	private static String emissiveSuffix;
 
@@ -28,7 +28,7 @@ public final class EmissiveSuffixLoader {
 		Optional<Resource> optionalResource = manager.getResource(LOCATION);
 		if (optionalResource.isPresent()) {
 			Resource resource = optionalResource.get();
-			try (InputStream inputStream = resource.getInputStream()) {
+			try (InputStream inputStream = resource.open()) {
 				Properties properties = new Properties();
 				properties.load(inputStream);
 				emissiveSuffix = properties.getProperty("suffix.emissive");

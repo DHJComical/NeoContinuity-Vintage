@@ -22,12 +22,12 @@ import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.resource.ResourceRedirectHandler;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.Registries;
-import net.minecraft.state.property.Property;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
+import net.minecraft.IdentifierException;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 
 public final class PropertiesParsingHelper {
 	public static final Predicate<BlockState> EMPTY_BLOCK_STATE_PREDICATE = state -> false;
@@ -94,8 +94,8 @@ public final class PropertiesParsingHelper {
 					}
 
 					try {
-						set.add(Identifier.of(namespace, path));
-					} catch (InvalidIdentifierException e) {
+						set.add(Identifier.fromNamespaceAndPath(namespace, path));
+					} catch (IdentifierException e) {
 						ContinuityClient.LOGGER.warn("Invalid '" + propertyKey + "' element '" + matchTileStr + "' at index " + i + " in file '" + fileLocation + "' in pack '" + packId + "'", e);
 					}
 				} else {
@@ -134,19 +134,19 @@ public final class PropertiesParsingHelper {
 					int startIndex;
 					try {
 						if (parts.length == 1 || parts[1].contains("=")) {
-							blockId = Identifier.ofVanilla(parts[0]);
+							blockId = Identifier.withDefaultNamespace(parts[0]);
 							startIndex = 1;
 						} else {
-							blockId = Identifier.of(parts[0], parts[1]);
+							blockId = Identifier.fromNamespaceAndPath(parts[0], parts[1]);
 							startIndex = 2;
 						}
-					} catch (InvalidIdentifierException e) {
+					} catch (IdentifierException e) {
 						ContinuityClient.LOGGER.warn("Invalid '" + propertyKey + "' element '" + blockStateStr + "' at index " + i + " in file '" + fileLocation + "' in pack '" + packId + "'", e);
 						continue;
 					}
 
-					if (Registries.BLOCK.containsId(blockId)) {
-						Block block = Registries.BLOCK.get(blockId);
+					if (BuiltInRegistries.BLOCK.containsKey(blockId)) {
+						Block block = BuiltInRegistries.BLOCK.getValue(blockId);
 						if (!blockSet.contains(block)) {
 							if (parts.length > startIndex) {
 								Object2ObjectOpenHashMap<Property<?>, ObjectOpenHashSet<Comparable<?>>> propertyMap = new Object2ObjectOpenHashMap<>();
@@ -157,7 +157,7 @@ public final class PropertiesParsingHelper {
 										String[] propertyParts = part.split("=", 2);
 										if (propertyParts.length == 2) {
 											String propertyName = propertyParts[0];
-											Property<?> property = block.getStateManager().getProperty(propertyName);
+											Property<?> property = block.getStateDefinition().getProperty(propertyName);
 											if (property != null) {
 												String propertyValuesStr = propertyParts[1];
 												String[] propertyValueStrs = propertyValuesStr.split(",");
@@ -165,7 +165,7 @@ public final class PropertiesParsingHelper {
 													ObjectOpenHashSet<Comparable<?>> valueSet = propertyMap.computeIfAbsent(property, p -> new ObjectOpenHashSet<>(Hash.DEFAULT_INITIAL_SIZE, Hash.VERY_FAST_LOAD_FACTOR));
 
 													for (String propertyValueStr : propertyValueStrs) {
-														Optional<? extends Comparable<?>> optionalValue = property.parse(propertyValueStr);
+														Optional<? extends Comparable<?>> optionalValue = property.getValue(propertyValueStr);
 														if (optionalValue.isPresent()) {
 															valueSet.add(optionalValue.get());
 														} else {
@@ -237,7 +237,7 @@ public final class PropertiesParsingHelper {
 						}
 
 						predicateMap.put(block, state -> {
-							Map<Property<?>, Comparable<?>> targetValueMap = state.getEntries();
+							Map<Property<?>, Comparable<?>> targetValueMap = state.getValues();
 							for (Map.Entry<Property<?>, ObjectOpenHashSet<Comparable<?>>> entry : entryArray) {
 								Comparable<?> targetValue = targetValueMap.get(entry.getKey());
 								if (targetValue != null) {

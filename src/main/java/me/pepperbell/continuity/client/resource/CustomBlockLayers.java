@@ -11,15 +11,15 @@ import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.properties.PropertiesParsingHelper;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.SynchronousResourceReloader;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class CustomBlockLayers {
-	public static final Identifier LOCATION = Identifier.ofVanilla("optifine/block.properties");
+	public static final Identifier LOCATION = Identifier.withDefaultNamespace("optifine/block.properties");
 
 	@SuppressWarnings("unchecked")
 	private static final Predicate<BlockState>[] EMPTY_LAYER_PREDICATES = new Predicate[BlockLayer.VALUES.length];
@@ -36,9 +36,9 @@ public final class CustomBlockLayers {
 	}
 
 	@Nullable
-	public static BlockRenderLayer getLayer(BlockState state) {
+	public static ChunkSectionLayer getLayer(BlockState state) {
 		if (!disableSolidCheck) {
-			if (state.isOpaqueFullCube()) {
+			if (state.isSolidRender()) {
 				return null;
 			}
 		}
@@ -62,12 +62,12 @@ public final class CustomBlockLayers {
 		Optional<Resource> optionalResource = manager.getResource(LOCATION);
 		if (optionalResource.isPresent()) {
 			Resource resource = optionalResource.get();
-			try (InputStream inputStream = resource.getInputStream()) {
+			try (InputStream inputStream = resource.open()) {
 				Properties properties = new Properties();
 				properties.load(inputStream);
-				reload(properties, LOCATION, resource.getPackId());
+				reload(properties, LOCATION, resource.sourcePackId());
 			} catch (IOException e) {
-				ContinuityClient.LOGGER.error("Failed to load custom block layers from file '" + LOCATION + "' from pack '" + resource.getPackId() + "'", e);
+				ContinuityClient.LOGGER.error("Failed to load custom block layers from file '" + LOCATION + "' from pack '" + resource.sourcePackId() + "'", e);
 			}
 		}
 	}
@@ -88,32 +88,32 @@ public final class CustomBlockLayers {
 		}
 	}
 
-	public static class ReloadListener implements SynchronousResourceReloader {
+	public static class ReloadListener implements ResourceManagerReloadListener {
 		public static final Identifier ID = ContinuityClient.asId("custom_block_layers");
 		public static final ReloadListener INSTANCE = new ReloadListener();
 
 		@Override
-		public void reload(ResourceManager manager) {
+		public void onResourceManagerReload(ResourceManager manager) {
 			CustomBlockLayers.reload(manager);
 		}
 	}
 
 	private enum BlockLayer {
-		SOLID(BlockRenderLayer.SOLID),
-		CUTOUT(BlockRenderLayer.CUTOUT),
-		TRANSLUCENT(BlockRenderLayer.TRANSLUCENT);
+		SOLID(ChunkSectionLayer.SOLID),
+		CUTOUT(ChunkSectionLayer.CUTOUT),
+		TRANSLUCENT(ChunkSectionLayer.TRANSLUCENT);
 
 		public static final BlockLayer[] VALUES = values();
 
-		private final BlockRenderLayer layer;
+		private final ChunkSectionLayer layer;
 		private final String key;
 
-		BlockLayer(BlockRenderLayer layer) {
+		BlockLayer(ChunkSectionLayer layer) {
 			this.layer = layer;
 			key = name().toLowerCase(Locale.ROOT);
 		}
 
-		public BlockRenderLayer getLayer() {
+		public ChunkSectionLayer getLayer() {
 			return layer;
 		}
 

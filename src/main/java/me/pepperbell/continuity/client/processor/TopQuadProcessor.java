@@ -4,37 +4,37 @@ import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.processor.simple.SimpleQuadProcessor;
 import me.pepperbell.continuity.client.properties.ConnectingCtmProperties;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class TopQuadProcessor extends AbstractQuadProcessor {
 	protected ConnectionPredicate connectionPredicate;
 	protected boolean innerSeams;
 
-	public TopQuadProcessor(Sprite[] sprites, ProcessingPredicate processingPredicate, ConnectionPredicate connectionPredicate, boolean innerSeams) {
+	public TopQuadProcessor(TextureAtlasSprite[] sprites, ProcessingPredicate processingPredicate, ConnectionPredicate connectionPredicate, boolean innerSeams) {
 		super(sprites, processingPredicate);
 		this.connectionPredicate = connectionPredicate;
 		this.innerSeams = innerSeams;
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(MutableQuadView quad, Sprite sprite, BlockRenderView blockView, BlockPos pos, BlockState appearanceState, BlockState state, Random random, int pass, ProcessingContext context) {
+	public ProcessingResult processQuadInner(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
 		Direction lightFace = quad.lightFace();
 		Direction.Axis axis;
-		if (appearanceState.contains(Properties.AXIS)) {
-			axis = appearanceState.get(Properties.AXIS);
+		if (appearanceState.hasProperty(BlockStateProperties.AXIS)) {
+			axis = appearanceState.getValue(BlockStateProperties.AXIS);
 		} else {
 			axis = Direction.Axis.Y;
 		}
 		if (lightFace.getAxis() != axis) {
-			Direction up = Direction.from(axis, Direction.AxisDirection.POSITIVE);
-			BlockPos.Mutable mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS).set(pos, up);
-			if (connectionPredicate.shouldConnect(blockView, pos, appearanceState, state, mutablePos, lightFace, sprite, innerSeams)) {
+			Direction up = Direction.fromAxisAndDirection(axis, Direction.AxisDirection.POSITIVE);
+			BlockPos.MutableBlockPos mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS).setWithOffset(pos, up);
+			if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, lightFace, sprite, innerSeams)) {
 				return SimpleQuadProcessor.process(quad, sprite, sprites[0]);
 			}
 		}
@@ -43,7 +43,7 @@ public class TopQuadProcessor extends AbstractQuadProcessor {
 
 	public static class Factory extends AbstractQuadProcessorFactory<ConnectingCtmProperties> {
 		@Override
-		public QuadProcessor createProcessor(ConnectingCtmProperties properties, Sprite[] sprites) {
+		public QuadProcessor createProcessor(ConnectingCtmProperties properties, TextureAtlasSprite[] sprites) {
 			return new TopQuadProcessor(sprites, BaseProcessingPredicate.fromProperties(properties), properties.getConnectionPredicate(), properties.getInnerSeams());
 		}
 
