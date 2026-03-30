@@ -24,6 +24,23 @@ public final class QuadUtil {
 		}
 	}
 
+	public static void interpolate(int[] vertexData, Sprite oldSprite, Sprite newSprite) {
+		float oldMinU = oldSprite.getMinU();
+		float oldMinV = oldSprite.getMinV();
+		float newMinU = newSprite.getMinU();
+		float newMinV = newSprite.getMinV();
+		float uFactor = (newSprite.getMaxU() - newMinU) / (oldSprite.getMaxU() - oldMinU);
+		float vFactor = (newSprite.getMaxV() - newMinV) / (oldSprite.getMaxV() - oldMinV);
+		for (int i = 0; i < 4; i++) {
+			float u = Float.intBitsToFloat(vertexData[i * 8 + 4]);
+			float v = Float.intBitsToFloat(vertexData[i * 8 + 5]);
+			u = newMinU + (u - oldMinU) * uFactor;
+			v = newMinV + (v - oldMinV) * vFactor;
+			vertexData[i * 8 + 4] = Float.floatToRawIntBits(u);
+			vertexData[i * 8 + 5] = Float.floatToRawIntBits(v);
+		}
+	}
+
 	public static void assignLerpedUvs(MutableQuadView quad, Sprite sprite) {
 		float delta = sprite.getUvScaleDelta();
 		float centerU = (sprite.getMinU() + sprite.getMaxU()) * 0.5f;
