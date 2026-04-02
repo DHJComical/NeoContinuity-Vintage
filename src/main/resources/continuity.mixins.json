@@ -6,6 +6,7 @@
   "client": [
     "AtlasLoaderMixin",
     "AtlasManagerMixin",
+    "BasicItemModelMixin",
     "LifecycledResourceManagerImplMixin",
     "RenderLayersMixin",
     "SpriteLoaderMixin",
