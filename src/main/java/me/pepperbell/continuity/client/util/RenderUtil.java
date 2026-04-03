@@ -20,11 +20,11 @@ public final class RenderUtil {
 
 	private static SpriteFinder blockAtlasSpriteFinder;
 
-	public static int getTintColor(@Nullable BlockState state, BlockAndTintGetter blockView, BlockPos pos, int tintIndex) {
+	public static int getTintColor(@Nullable BlockState state, BlockAndTintGetter level, BlockPos pos, int tintIndex) {
 		if (state == null || tintIndex == -1) {
 			return -1;
 		}
-		return 0xFF000000 | BLOCK_COLORS.getColor(state, blockView, pos, tintIndex);
+		return 0xFF000000 | BLOCK_COLORS.getColor(state, level, pos, tintIndex);
 	}
 
 	public static TriState aoFromTintBlock(@Nullable BlockState tintBlock) {

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "AtlasManagerMixin",
+    "BlockModelWrapperMixin",
     "ItemBlockRenderTypesMixin",
     "MultiPackResourceManagerMixin",
     "SpriteLoaderMixin",

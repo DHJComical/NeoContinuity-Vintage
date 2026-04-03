@@ -6,6 +6,8 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.model.geom.builders.UVPair;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
@@ -23,6 +25,22 @@ public final class QuadUtil {
 					newMinU + (quad.u(i) - oldMinU) * uFactor,
 					newMinV + (quad.v(i) - oldMinV) * vFactor
 			);
+		}
+	}
+
+	public static void interpolate(BakedQuad quad, PackedUvContainer output, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
+		float oldMinU = oldSprite.getU0();
+		float oldMinV = oldSprite.getV0();
+		float newMinU = newSprite.getU0();
+		float newMinV = newSprite.getV0();
+		float uFactor = (newSprite.getU1() - newMinU) / (oldSprite.getU1() - oldMinU);
+		float vFactor = (newSprite.getV1() - newMinV) / (oldSprite.getV1() - oldMinV);
+		for (int i = 0; i < 4; i++) {
+			long packedUv = quad.packedUV(i);
+			output.packedUV(i, UVPair.pack(
+					newMinU + (UVPair.unpackU(packedUv) - oldMinU) * uFactor,
+					newMinV + (UVPair.unpackV(packedUv) - oldMinV) * vFactor
+			));
 		}
 	}
 
@@ -159,5 +177,22 @@ public final class QuadUtil {
 		// up/+y -> 0, left/-x -> 1, down/-y -> 2, right/+x -> 3
 		// Add 4 if the UV winding order is clockwise
 		return (Math.abs(y) >= Math.abs(x) ? (y > 0 ? 0 : 2) : (x > 0 ? 3 : 1)) + (determinant < 0 ? 4 : 0);
+	}
+
+	public static class PackedUvContainer {
+		public long packedUV0;
+		public long packedUV1;
+		public long packedUV2;
+		public long packedUV3;
+
+		public void packedUV(int index, long packedUV) {
+			switch (index) {
+				case 0 -> packedUV0 = packedUV;
+				case 1 -> packedUV1 = packedUV;
+				case 2 -> packedUV2 = packedUV;
+				case 3 -> packedUV3 = packedUV;
+				default -> throw new IndexOutOfBoundsException(index);
+			}
+		}
 	}
 }
