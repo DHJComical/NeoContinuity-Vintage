@@ -7,7 +7,9 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.render.BlockRenderLayer;
+import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.Vector2f;
 import net.minecraft.util.math.Direction;
 
 public final class QuadUtil {
@@ -23,6 +25,22 @@ public final class QuadUtil {
 					newMinU + (quad.u(i) - oldMinU) * uFactor,
 					newMinV + (quad.v(i) - oldMinV) * vFactor
 			);
+		}
+	}
+
+	public static void interpolate(BakedQuad quad, PackedUvContainer output, Sprite oldSprite, Sprite newSprite) {
+		float oldMinU = oldSprite.getMinU();
+		float oldMinV = oldSprite.getMinV();
+		float newMinU = newSprite.getMinU();
+		float newMinV = newSprite.getMinV();
+		float uFactor = (newSprite.getMaxU() - newMinU) / (oldSprite.getMaxU() - oldMinU);
+		float vFactor = (newSprite.getMaxV() - newMinV) / (oldSprite.getMaxV() - oldMinV);
+		for (int i = 0; i < 4; i++) {
+			long packedUv = quad.getTexcoords(i);
+			output.packedUV(i, Vector2f.toLong(
+					newMinU + (Vector2f.getX(packedUv) - oldMinU) * uFactor,
+					newMinV + (Vector2f.getY(packedUv) - oldMinV) * vFactor
+			));
 		}
 	}
 
@@ -159,5 +177,22 @@ public final class QuadUtil {
 		// up/+y -> 0, left/-x -> 1, down/-y -> 2, right/+x -> 3
 		// Add 4 if the UV winding order is clockwise
 		return (Math.abs(y) >= Math.abs(x) ? (y > 0 ? 0 : 2) : (x > 0 ? 3 : 1)) + (determinant < 0 ? 4 : 0);
+	}
+
+	public static class PackedUvContainer {
+		public long packedUV0;
+		public long packedUV1;
+		public long packedUV2;
+		public long packedUV3;
+
+		public void packedUV(int index, long packedUV) {
+			switch (index) {
+				case 0 -> packedUV0 = packedUV;
+				case 1 -> packedUV1 = packedUV;
+				case 2 -> packedUV2 = packedUV;
+				case 3 -> packedUV3 = packedUV;
+				default -> throw new IndexOutOfBoundsException(index);
+			}
+		}
 	}
 }

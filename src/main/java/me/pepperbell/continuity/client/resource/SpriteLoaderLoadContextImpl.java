@@ -14,10 +14,12 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 	private final CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture;
 	private final Map<Identifier, CompletableFuture<Set<Identifier>>> extraIdsFutures = new Object2ObjectOpenHashMap<>();
 	private final SpriteLoaderLoadContext.EmissiveControl blockAtlasEmissiveControl;
+	private final SpriteLoaderLoadContext.EmissiveControl itemAtlasEmissiveControl;
 
 	public SpriteLoaderLoadContextImpl(CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture, CompletableFuture<Boolean> blockAtlasHasEmissivesFuture) {
 		this.allExtraIdsFuture = allExtraIdsFuture;
 		blockAtlasEmissiveControl = new EmissiveControlImpl(blockAtlasHasEmissivesFuture);
+		itemAtlasEmissiveControl = new EmissiveControlImpl();
 	}
 
 	@Override
@@ -30,6 +32,8 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 	public SpriteLoaderLoadContext.EmissiveControl getEmissiveControl(Identifier atlasId) {
 		if (atlasId.equals(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE)) {
 			return blockAtlasEmissiveControl;
+		} else if (atlasId.equals(SpriteAtlasTexture.ITEMS_ATLAS_TEXTURE)) {
+			return itemAtlasEmissiveControl;
 		}
 		return null;
 	}
@@ -37,10 +41,15 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 	private static class EmissiveControlImpl implements SpriteLoaderLoadContext.EmissiveControl {
 		@Nullable
 		private volatile Map<Identifier, Identifier> emissiveIdMap;
+		@Nullable
 		private final CompletableFuture<Boolean> hasEmissivesFuture;
 
-		public EmissiveControlImpl(CompletableFuture<Boolean> hasEmissivesFuture) {
+		public EmissiveControlImpl(@Nullable CompletableFuture<Boolean> hasEmissivesFuture) {
 			this.hasEmissivesFuture = hasEmissivesFuture;
+		}
+
+		public EmissiveControlImpl() {
+			this(null);
 		}
 
 		@Override
@@ -52,7 +61,9 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 		@Override
 		public void setEmissiveIdMap(Map<Identifier, Identifier> emissiveIdMap) {
 			if (emissiveIdMap.isEmpty()) {
-				hasEmissivesFuture.complete(false);
+				if (hasEmissivesFuture != null) {
+					hasEmissivesFuture.complete(false);
+				}
 			} else {
 				this.emissiveIdMap = emissiveIdMap;
 			}
@@ -60,7 +71,9 @@ public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
 
 		@Override
 		public void setHasEmissives(boolean hasEmissives) {
-			hasEmissivesFuture.complete(hasEmissives);
+			if (hasEmissivesFuture != null) {
+				hasEmissivesFuture.complete(hasEmissives);
+			}
 		}
 	}
 }
