@@ -8,12 +8,12 @@ import me.pepperbell.continuity.client.processor.BaseProcessingPredicate;
 import me.pepperbell.continuity.client.processor.ProcessingPredicate;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import me.pepperbell.continuity.client.util.QuadUtil;
-import me.pepperbell.continuity.client.util.TextureUtil;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import me.pepperbell.continuity.client.util.RenderUtil;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SimpleQuadProcessor implements QuadProcessor {
@@ -38,7 +38,7 @@ public class SimpleQuadProcessor implements QuadProcessor {
 		if (newSprite == null) {
 			return ProcessingResult.STOP;
 		}
-		if (TextureUtil.isMissingSprite(newSprite)) {
+		if (RenderUtil.isMissingSprite(newSprite)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
 		QuadUtil.interpolate(quad, oldSprite, newSprite);
@@ -58,8 +58,8 @@ public class SimpleQuadProcessor implements QuadProcessor {
 		}
 
 		@Override
-		public int getTextureAmount(T properties) {
-			return spriteProviderFactory.getTextureAmount(properties);
+		public int getSpriteAmount(T properties) {
+			return spriteProviderFactory.getSpriteAmount(properties);
 		}
 	}
 }

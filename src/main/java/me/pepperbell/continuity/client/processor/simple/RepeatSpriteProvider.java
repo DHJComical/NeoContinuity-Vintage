@@ -6,12 +6,12 @@ import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RepeatCtmProperties;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class RepeatSpriteProvider implements SpriteProvider {
@@ -127,7 +127,7 @@ public class RepeatSpriteProvider implements SpriteProvider {
 		}
 
 		@Override
-		public int getTextureAmount(RepeatCtmProperties properties) {
+		public int getSpriteAmount(RepeatCtmProperties properties) {
 			return properties.getWidth() * properties.getHeight();
 		}
 	}

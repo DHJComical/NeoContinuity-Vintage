@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,18 +29,14 @@ public class ContinuityConfigScreen extends Screen {
 	protected void init() {
 		Value<Boolean> connectedTextures = Value.of(config.connectedTextures, Value.Flag.RELOAD_WORLD_RENDERER);
 		Value<Boolean> emissiveTextures = Value.of(config.emissiveTextures, Value.Flag.RELOAD_WORLD_RENDERER);
-		Value<Boolean> customBlockLayers = Value.of(config.customBlockLayers, Value.Flag.RELOAD_WORLD_RENDERER);
 
-		values = List.of(connectedTextures, emissiveTextures, customBlockLayers);
+		values = List.of(connectedTextures, emissiveTextures);
 
 		addRenderableWidget(startBooleanValueButton(connectedTextures)
-				.bounds(width / 2 - 100 - 110, height / 2 - 10 - 12, 200, 20)
+				.bounds(width / 2 - 100 - 110, height / 2 - 10, 200, 20)
 				.build());
 		addRenderableWidget(startBooleanValueButton(emissiveTextures)
-				.bounds(width / 2 - 100 + 110, height / 2 - 10 - 12, 200, 20)
-				.build());
-		addRenderableWidget(startBooleanValueButton(customBlockLayers)
-				.bounds(width / 2 - 100 - 110, height / 2 - 10 + 12, 200, 20)
+				.bounds(width / 2 - 100 + 110, height / 2 - 10, 200, 20)
 				.build());
 
 		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE,
@@ -56,9 +52,9 @@ public class ContinuityConfigScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
-		context.drawCenteredString(font, title, width / 2, 30, 0xFFFFFF);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+		super.extractRenderState(graphics, mouseX, mouseY, a);
+		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFF);
 	}
 
 	@Override

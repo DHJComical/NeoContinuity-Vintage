@@ -10,14 +10,13 @@ import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.OverlayPropertiesSection;
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
-import me.pepperbell.continuity.client.util.TextureUtil;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
@@ -39,7 +38,7 @@ public class SimpleOverlayQuadProcessor extends SimpleQuadProcessor {
 	public ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
 		if (processingPredicate.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, context)) {
 			TextureAtlasSprite newSprite = spriteProvider.getSprite(quad, sprite, level, pos, appearanceState, state, random, context);
-			if (newSprite != null && !TextureUtil.isMissingSprite(newSprite)) {
+			if (newSprite != null && !RenderUtil.isMissingSprite(newSprite)) {
 				QuadUtil.emitOverlayQuad(context.getExtraQuadEmitter(), quad.lightFace(), newSprite, RenderUtil.getTintColor(tintBlock, level, pos, tintIndex), layer, ao);
 			}
 		}

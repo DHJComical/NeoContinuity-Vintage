@@ -37,7 +37,6 @@ import me.pepperbell.continuity.client.properties.overlay.RandomOverlayCtmProper
 import me.pepperbell.continuity.client.properties.overlay.RepeatOverlayCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.StandardOverlayCtmProperties;
 import me.pepperbell.continuity.client.resource.CtmResourceReloader;
-import me.pepperbell.continuity.client.resource.CustomBlockLayers;
 import me.pepperbell.continuity.client.resource.ModelWrappingHandler;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.biome.BiomeHolderManager;
@@ -64,10 +63,9 @@ public class ContinuityClient implements ClientModInitializer {
 		ModelWrappingHandler.init();
 
 		ResourceLoader resourceLoader = ResourceLoader.get(PackType.CLIENT_RESOURCES);
-		resourceLoader.registerReloader(RenderUtil.ReloadListener.ID, RenderUtil.ReloadListener.INSTANCE);
-		resourceLoader.addReloaderOrdering(ResourceReloaderKeys.Client.ATLAS, RenderUtil.ReloadListener.ID);
-		resourceLoader.registerReloader(CustomBlockLayers.ReloadListener.ID, CustomBlockLayers.ReloadListener.INSTANCE);
-		resourceLoader.registerReloader(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
+		resourceLoader.registerReloadListener(RenderUtil.ReloadListener.ID, RenderUtil.ReloadListener.INSTANCE);
+		resourceLoader.addListenerOrdering(ResourceReloaderKeys.Client.ATLAS, RenderUtil.ReloadListener.ID);
+		resourceLoader.registerReloadListener(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
 
 		FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
 			ResourceLoader.registerBuiltinPack(asId("default"), container, Component.translatable("resourcePack.continuity.default.name"), PackActivationType.NORMAL);

@@ -3,7 +3,7 @@ package me.pepperbell.continuity.api.client;
 import java.util.function.Function;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface CachingPredicates {
@@ -18,6 +18,6 @@ public interface CachingPredicates {
 	boolean isValidForMultipass();
 
 	interface Factory<T extends CtmProperties> {
-		CachingPredicates createPredicates(T properties, Function<Material, TextureAtlasSprite> spriteGetter);
+		CachingPredicates createPredicates(T properties, Function<Identifier, TextureAtlasSprite> spriteGetter);
 	}
 }

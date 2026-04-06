@@ -2,14 +2,15 @@
   "required": true,
   "minVersion": "0.8",
   "package": "me.pepperbell.continuity.client.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "client": [
     "AtlasManagerMixin",
-    "BlockModelWrapperMixin",
-    "ItemBlockRenderTypesMixin",
+    "CuboidItemModelWrapperMixin",
+    "CuboidItemModelWrapperUnbakedMixin",
     "MultiPackResourceManagerMixin",
     "SpriteLoaderMixin",
     "SpriteSourceListMixin",
+    "StateHolderAccessor",
     "TextureAtlasSpriteMixin"
   ],
   "injectors": {

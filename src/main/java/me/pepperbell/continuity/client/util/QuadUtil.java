@@ -1,15 +1,27 @@
 package me.pepperbell.continuity.client.util;
 
+import java.util.function.Consumer;
+
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import me.pepperbell.continuity.client.mixinterface.TextureAtlasSpriteExtension;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MeshView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadAtlas;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.model.MeshQuadCollection;
+import net.fabricmc.fabric.api.client.renderer.v1.sprite.SpriteFinderGetter;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.model.geom.builders.UVPair;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
 import net.minecraft.core.Direction;
 
 public final class QuadUtil {
@@ -26,6 +38,7 @@ public final class QuadUtil {
 					newMinV + (quad.v(i) - oldMinV) * vFactor
 			);
 		}
+		quad.animated(newSprite.contents().isAnimated());
 	}
 
 	public static void interpolate(BakedQuad quad, PackedUvContainer output, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
@@ -44,11 +57,17 @@ public final class QuadUtil {
 		}
 	}
 
-	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, TextureAtlasSprite sprite, int color, @Nullable ChunkSectionLayer renderLayer, TriState ao) {
+	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, TextureAtlasSprite sprite, int color, ChunkSectionLayer chunkLayer, TriState ao) {
 		emitter.square(face, 0, 0, 1, 1, 0);
 		emitter.color(color, color, color, color);
-		emitter.spriteBake(sprite, MutableQuadView.BAKE_LOCK_UV);
-		emitter.renderLayer(renderLayer);
+		emitter.uv(0, sprite.getU0(), sprite.getV0());
+		emitter.uv(1, sprite.getU0(), sprite.getV1());
+		emitter.uv(2, sprite.getU1(), sprite.getV1());
+		emitter.uv(3, sprite.getU1(), sprite.getV0());
+		emitter.atlas(QuadAtlas.BLOCK);
+		emitter.animated(sprite.contents().isAnimated());
+		emitter.chunkLayer(chunkLayer);
+		emitter.itemRenderType(chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet());
 		emitter.ambientOcclusion(ao);
 		emitter.emit();
 	}
@@ -177,6 +196,66 @@ public final class QuadUtil {
 		// up/+y -> 0, left/-x -> 1, down/-y -> 2, right/+x -> 3
 		// Add 4 if the UV winding order is clockwise
 		return (Math.abs(y) >= Math.abs(x) ? (y > 0 ? 0 : 2) : (x > 0 ? 3 : 1)) + (determinant < 0 ? 4 : 0);
+	}
+
+	@Nullable
+	public static QuadCollection createEmissiveQuads(QuadCollection quads, @Nullable SpriteFinderGetter spriteFinderGetter) {
+		if (quads instanceof MeshQuadCollection meshQuadCollection) {
+			if (spriteFinderGetter == null) {
+				return null;
+			}
+
+			Mesh emissiveMesh = createEmissiveMesh(meshQuadCollection.getMesh(), spriteFinderGetter);
+			return emissiveMesh != null ? new MeshQuadCollection(emissiveMesh) : null;
+		}
+
+		QuadCollection.Builder emissiveQuadsBuilder = null;
+		PackedUvContainer output = null;
+		for (BakedQuad quad : quads.getAll()) {
+			BakedQuad.MaterialInfo materialInfo = quad.materialInfo();
+			TextureAtlasSprite emissiveSprite = ((TextureAtlasSpriteExtension) materialInfo.sprite()).continuity$getEmissiveSprite();
+			if (emissiveSprite != null) {
+				if (emissiveQuadsBuilder == null) {
+					output = new PackedUvContainer();
+					emissiveQuadsBuilder = new QuadCollection.Builder();
+				}
+
+				interpolate(quad, output, quad.materialInfo().sprite(), emissiveSprite);
+				BakedQuad.MaterialInfo emissiveMaterialInfo = new BakedQuad.MaterialInfo(emissiveSprite, materialInfo.layer(), materialInfo.itemRenderType(), materialInfo.tintIndex(), false, 15);
+				BakedQuad emissiveQuad = new BakedQuad(quad.position0(), quad.position1(), quad.position2(), quad.position3(), output.packedUV0, output.packedUV1, output.packedUV2, output.packedUV3, quad.direction(), emissiveMaterialInfo);
+				emissiveQuadsBuilder.addUnculledFace(emissiveQuad);
+			}
+		}
+		return emissiveQuadsBuilder != null ? emissiveQuadsBuilder.build() : null;
+	}
+
+	@Nullable
+	public static Mesh createEmissiveMesh(MeshView mesh, SpriteFinderGetter spriteFinderGetter) {
+		var quadConsumer = new Consumer<QuadView>() {
+			@Nullable
+			private MutableMesh emissiveMeshBuilder;
+			@Nullable
+			private QuadEmitter emitter;
+
+			@Override
+			public void accept(QuadView quad) {
+				TextureAtlasSprite sprite = spriteFinderGetter.spriteFinder(quad.atlas()).find(quad);
+				TextureAtlasSprite emissiveSprite = ((TextureAtlasSpriteExtension) sprite).continuity$getEmissiveSprite();
+				if (emissiveSprite != null) {
+					if (emissiveMeshBuilder == null) {
+						emissiveMeshBuilder = Renderer.get().mutableMesh();
+						emitter = emissiveMeshBuilder.emitter();
+					}
+
+					emitter.copyFrom(quad);
+					interpolate(emitter, sprite, emissiveSprite);
+					emitter.emissive(true);
+					emitter.emit();
+				}
+			}
+		};
+		mesh.forEach(quadConsumer);
+		return quadConsumer.emissiveMeshBuilder != null ? quadConsumer.emissiveMeshBuilder.immutableCopy() : null;
 	}
 
 	public static class PackedUvContainer {

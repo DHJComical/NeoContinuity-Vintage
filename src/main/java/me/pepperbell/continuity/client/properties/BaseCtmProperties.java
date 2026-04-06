@@ -15,7 +15,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -24,13 +23,12 @@ import me.pepperbell.continuity.api.client.CtmProperties;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.resource.ResourceRedirectHandler;
 import me.pepperbell.continuity.client.util.MathUtil;
-import me.pepperbell.continuity.client.util.TextureUtil;
 import me.pepperbell.continuity.client.util.biome.BiomeHolder;
 import me.pepperbell.continuity.client.util.biome.BiomeHolderManager;
 import me.pepperbell.continuity.client.util.biome.BiomeSetPredicate;
 import net.minecraft.IdentifierException;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -45,8 +43,6 @@ import net.minecraft.world.level.block.state.BlockState;
 public class BaseCtmProperties implements CtmProperties {
 	public static final Identifier SPECIAL_SKIP_ID = ContinuityClient.asId("special/skip");
 	public static final Identifier SPECIAL_DEFAULT_ID = ContinuityClient.asId("special/default");
-	public static final Material SPECIAL_SKIP_MATERIAL = TextureUtil.toMaterial(SPECIAL_SKIP_ID);
-	public static final Material SPECIAL_DEFAULT_MATERIAL = TextureUtil.toMaterial(SPECIAL_DEFAULT_ID);
 
 	protected static final int DIRECTION_AMOUNT = Direction.values().length;
 
@@ -61,7 +57,8 @@ public class BaseCtmProperties implements CtmProperties {
 	protected Set<Identifier> matchTilesSet;
 	@Nullable
 	protected Predicate<BlockState> matchBlocksPredicate;
-	protected List<Identifier> tiles = Collections.emptyList();
+	protected List<Identifier> spriteIds = Collections.emptyList();
+	protected Set<Identifier> spriteDependencies = Collections.emptySet();
 	@Nullable
 	protected EnumSet<Direction> faces;
 	@Nullable
@@ -74,8 +71,6 @@ public class BaseCtmProperties implements CtmProperties {
 	protected boolean prioritized = false;
 
 	protected boolean valid = true;
-	protected Set<Material> textureDependencies;
-	protected List<Material> materials;
 
 	public BaseCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
 		this.properties = properties;
@@ -87,11 +82,8 @@ public class BaseCtmProperties implements CtmProperties {
 	}
 
 	@Override
-	public Set<Material> getTextureDependencies() {
-		if (textureDependencies == null) {
-			resolveTiles();
-		}
-		return textureDependencies;
+	public Set<Identifier> getSpriteDependencies() {
+		return spriteDependencies;
 	}
 
 	// TODO: sorting API using Comparator
@@ -181,8 +173,18 @@ public class BaseCtmProperties implements CtmProperties {
 
 		String[] tileStrs = tilesStr.trim().split("[ ,]");
 		if (tileStrs.length != 0) {
+			spriteIds = new ObjectArrayList<>();
+			spriteDependencies = new ObjectOpenHashSet<>();
+
 			String basePath = FilenameUtils.getPath(resourceId.getPath());
-			ImmutableList.Builder<Identifier> listBuilder = ImmutableList.builder();
+			String spriteBasePath;
+			if (basePath.startsWith("textures/")) {
+				spriteBasePath = basePath.substring(9);
+			} else if (basePath.startsWith("optifine/")) {
+				spriteBasePath = ResourceRedirectHandler.SPRITE_PATH_START + basePath.substring(9);
+			} else {
+				spriteBasePath = null;
+			}
 
 			for (int i = 0; i < tileStrs.length; i++) {
 				String tileStr = tileStrs[i];
@@ -191,10 +193,10 @@ public class BaseCtmProperties implements CtmProperties {
 				}
 
 				if (tileStr.endsWith("<skip>") || tileStr.endsWith("<skip>.png")) {
-					listBuilder.add(SPECIAL_SKIP_ID);
+					spriteIds.add(SPECIAL_SKIP_ID);
 					continue;
 				} else if (tileStr.endsWith("<default>") || tileStr.endsWith("<default>.png")) {
-					listBuilder.add(SPECIAL_DEFAULT_ID);
+					spriteIds.add(SPECIAL_DEFAULT_ID);
 					continue;
 				}
 
@@ -205,12 +207,20 @@ public class BaseCtmProperties implements CtmProperties {
 							int min = Integer.parseInt(rangeParts[0]);
 							int max = Integer.parseInt(rangeParts[1]);
 							if (min <= max) {
-								try {
-									for (int tile = min; tile <= max; tile++) {
-										listBuilder.add(resourceId.withPath(basePath + tile + ".png"));
+								if (spriteBasePath != null) {
+									try {
+										for (int tile = min; tile <= max; tile++) {
+											Identifier spriteId = resourceId.withPath(spriteBasePath + tile);
+											spriteIds.add(spriteId);
+											spriteDependencies.add(spriteId);
+										}
+									} catch (IdentifierException e) {
+										ContinuityClient.LOGGER.warn("Invalid 'tiles' element '" + tileStr + "' at index " + i + " in file '" + resourceId + "' in pack '" + packId + "'", e);
 									}
-								} catch (IdentifierException e) {
-									ContinuityClient.LOGGER.warn("Invalid 'tiles' element '" + tileStr + "' at index " + i + " in file '" + resourceId + "' in pack '" + packId + "'", e);
+								} else {
+									for (int tile = min; tile <= max; tile++) {
+										spriteIds.add(MissingTextureAtlasSprite.getLocation());
+									}
 								}
 							} else {
 								ContinuityClient.LOGGER.warn("Invalid 'tiles' element '" + tileStr + "' at index " + i + " in file '" + resourceId + "' in pack '" + packId + "'");
@@ -233,8 +243,8 @@ public class BaseCtmProperties implements CtmProperties {
 							path = parts[0];
 						}
 
-						if (!path.endsWith(".png")) {
-							path += ".png";
+						if (path.endsWith(".png")) {
+							path = path.substring(0, path.length() - 4);
 						}
 
 						if (namespace == null) {
@@ -263,12 +273,23 @@ public class BaseCtmProperties implements CtmProperties {
 							}
 						}
 
+						if (path.startsWith("textures/")) {
+							path = path.substring(9);
+						} else if (path.startsWith("optifine/")) {
+							path = ResourceRedirectHandler.SPRITE_PATH_START + path.substring(9);
+						} else {
+							spriteIds.add(MissingTextureAtlasSprite.getLocation());
+							continue;
+						}
+
 						if (namespace == null) {
 							namespace = Identifier.DEFAULT_NAMESPACE;
 						}
 
 						try {
-							listBuilder.add(Identifier.fromNamespaceAndPath(namespace, path));
+							Identifier spriteId = Identifier.fromNamespaceAndPath(namespace, path);
+							spriteIds.add(spriteId);
+							spriteDependencies.add(spriteId);
 						} catch (IdentifierException e) {
 							ContinuityClient.LOGGER.warn("Invalid 'tiles' element '" + tileStr + "' at index " + i + " in file '" + resourceId + "' in pack '" + packId + "'", e);
 						}
@@ -277,8 +298,6 @@ public class BaseCtmProperties implements CtmProperties {
 					ContinuityClient.LOGGER.warn("Invalid 'tiles' element '" + tileStr + "' at index " + i + " in file '" + resourceId + "' in pack '" + packId + "'");
 				}
 			}
-
-			tiles = listBuilder.build();
 		}
 	}
 
@@ -622,42 +641,6 @@ public class BaseCtmProperties implements CtmProperties {
 		return valid;
 	}
 
-	protected void resolveTiles() {
-		textureDependencies = new ObjectOpenHashSet<>();
-		materials = new ObjectArrayList<>();
-
-		for (Identifier tile : tiles) {
-			Material material;
-			if (tile.equals(SPECIAL_SKIP_ID)) {
-				material = SPECIAL_SKIP_MATERIAL;
-			} else if (tile.equals(SPECIAL_DEFAULT_ID)) {
-				material = SPECIAL_DEFAULT_MATERIAL;
-			} else {
-				String path = tile.getPath();
-				if (path.startsWith("textures/")) {
-					path = path.substring(9);
-					if (path.endsWith(".png")) {
-						path = path.substring(0, path.length() - 4);
-					}
-
-					material = TextureUtil.toMaterial(tile.withPath(path));
-					textureDependencies.add(material);
-				} else if (path.startsWith("optifine/")) {
-					path = ResourceRedirectHandler.SPRITE_PATH_START + path.substring(9);
-					if (path.endsWith(".png")) {
-						path = path.substring(0, path.length() - 4);
-					}
-
-					material = TextureUtil.toMaterial(tile.withPath(path));
-					textureDependencies.add(material);
-				} else {
-					material = TextureUtil.MISSING_MATERIAL;
-				}
-			}
-			materials.add(material);
-		}
-	}
-
 	public Properties getProperties() {
 		return properties;
 	}
@@ -688,8 +671,8 @@ public class BaseCtmProperties implements CtmProperties {
 		return matchBlocksPredicate;
 	}
 
-	public int getTileAmount() {
-		return tiles.size();
+	public List<Identifier> getSpriteIds() {
+		return spriteIds;
 	}
 
 	@Nullable
@@ -714,13 +697,6 @@ public class BaseCtmProperties implements CtmProperties {
 
 	public boolean isPrioritized() {
 		return prioritized;
-	}
-
-	public List<Material> getMaterials() {
-		if (materials == null) {
-			resolveTiles();
-		}
-		return materials;
 	}
 
 	public static <T extends BaseCtmProperties> Factory<T> wrapFactory(Factory<T> factory) {

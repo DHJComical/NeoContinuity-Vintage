@@ -11,7 +11,8 @@ import net.minecraft.resources.Identifier;
 public interface SpriteLoaderLoadContext {
 	ThreadLocal<SpriteLoaderLoadContext> THREAD_LOCAL = new ThreadLocal<>();
 
-	CompletableFuture<@Nullable Set<Identifier>> getExtraIdsFuture(Identifier atlasId);
+	@Nullable
+	CompletableFuture<Set<Identifier>> getExtraIdsFuture(Identifier atlasId);
 
 	@Nullable
 	EmissiveControl getEmissiveControl(Identifier atlasId);

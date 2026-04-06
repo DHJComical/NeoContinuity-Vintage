@@ -1,7 +1,7 @@
 package me.pepperbell.continuity.client.processor;
 
 import me.pepperbell.continuity.client.util.QuadUtil;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;

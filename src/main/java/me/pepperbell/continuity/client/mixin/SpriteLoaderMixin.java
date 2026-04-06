@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -39,24 +38,32 @@ abstract class SpriteLoaderMixin {
 	private Supplier<List<Function<SpriteResourceLoader, SpriteContents>>> continuity$modifySupplier(Supplier<List<Function<SpriteResourceLoader, SpriteContents>>> supplier) {
 		SpriteLoaderLoadContext context = SpriteLoaderLoadContext.THREAD_LOCAL.get();
 		if (context != null) {
-			CompletableFuture<@Nullable Set<Identifier>> extraIdsFuture = context.getExtraIdsFuture(location);
+			CompletableFuture<Set<Identifier>> extraIdsFuture = context.getExtraIdsFuture(location);
 			SpriteLoaderLoadContext.EmissiveControl emissiveControl = context.getEmissiveControl(location);
-			if (emissiveControl != null) {
+			if (extraIdsFuture != null && emissiveControl != null) {
 				return () -> {
 					SpriteSourceListInitContext.THREAD_LOCAL.set(extraIdsFuture::join);
 					SpriteSourceListListContext.THREAD_LOCAL.set(emissiveControl::setEmissiveIdMap);
 					List<Function<SpriteResourceLoader, SpriteContents>> list = supplier.get();
-					SpriteSourceListInitContext.THREAD_LOCAL.set(null);
-					SpriteSourceListListContext.THREAD_LOCAL.set(null);
+					SpriteSourceListInitContext.THREAD_LOCAL.remove();
+					SpriteSourceListListContext.THREAD_LOCAL.remove();
+					return list;
+				};
+			} else if (extraIdsFuture != null) {
+				return () -> {
+					SpriteSourceListInitContext.THREAD_LOCAL.set(extraIdsFuture::join);
+					List<Function<SpriteResourceLoader, SpriteContents>> list = supplier.get();
+					SpriteSourceListInitContext.THREAD_LOCAL.remove();
+					return list;
+				};
+			} else if (emissiveControl != null) {
+				return () -> {
+					SpriteSourceListListContext.THREAD_LOCAL.set(emissiveControl::setEmissiveIdMap);
+					List<Function<SpriteResourceLoader, SpriteContents>> list = supplier.get();
+					SpriteSourceListListContext.THREAD_LOCAL.remove();
 					return list;
 				};
 			}
-			return () -> {
-				SpriteSourceListInitContext.THREAD_LOCAL.set(extraIdsFuture::join);
-				List<Function<SpriteResourceLoader, SpriteContents>> list = supplier.get();
-				SpriteSourceListInitContext.THREAD_LOCAL.set(null);
-				return list;
-			};
 		}
 		return supplier;
 	}
@@ -82,7 +89,7 @@ abstract class SpriteLoaderMixin {
 							}
 						});
 						SpriteLoader.Preparations result = function.apply(spriteContentsList);
-						SpriteLoaderStitchContext.THREAD_LOCAL.set(null);
+						SpriteLoaderStitchContext.THREAD_LOCAL.remove();
 						return result;
 					}
 					return function.apply(spriteContentsList);

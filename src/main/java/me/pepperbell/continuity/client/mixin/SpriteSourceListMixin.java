@@ -36,7 +36,7 @@ abstract class SpriteSourceListMixin {
 		SpriteSourceListInitContext context = SpriteSourceListInitContext.THREAD_LOCAL.get();
 		if (context != null) {
 			Set<Identifier> extraIds = context.getExtraIds();
-			if (extraIds != null && !extraIds.isEmpty()) {
+			if (!extraIds.isEmpty()) {
 				List<SpriteSource> extraSources = new ObjectArrayList<>();
 				for (Identifier extraId : extraIds) {
 					extraSources.add(new SingleFile(extraId, Optional.empty()));

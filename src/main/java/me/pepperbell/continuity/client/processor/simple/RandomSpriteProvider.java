@@ -8,12 +8,12 @@ import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RandomCtmProperties;
 import me.pepperbell.continuity.client.util.MathUtil;
 import me.pepperbell.continuity.client.util.RandomIndexProvider;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -67,8 +67,8 @@ public class RandomSpriteProvider implements SpriteProvider {
 		}
 
 		@Override
-		public int getTextureAmount(RandomCtmProperties properties) {
-			return properties.getMaterials().size();
+		public int getSpriteAmount(RandomCtmProperties properties) {
+			return properties.getSpriteIds().size();
 		}
 	}
 }

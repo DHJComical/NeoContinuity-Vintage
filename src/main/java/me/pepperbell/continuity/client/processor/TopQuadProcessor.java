@@ -3,12 +3,12 @@ package me.pepperbell.continuity.client.processor;
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.processor.simple.SimpleQuadProcessor;
 import me.pepperbell.continuity.client.properties.ConnectingCtmProperties;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -48,7 +48,7 @@ public class TopQuadProcessor extends AbstractQuadProcessor {
 		}
 
 		@Override
-		public int getTextureAmount(ConnectingCtmProperties properties) {
+		public int getSpriteAmount(ConnectingCtmProperties properties) {
 			return 1;
 		}
 	}

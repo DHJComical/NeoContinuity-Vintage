@@ -6,25 +6,27 @@ import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.Identifier;
 
 public class SpriteLoaderLoadContextImpl implements SpriteLoaderLoadContext {
-	private final CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture;
-	private final Map<Identifier, CompletableFuture<Set<Identifier>>> extraIdsFutures = new Object2ObjectOpenHashMap<>();
+	private final CompletableFuture<Set<Identifier>> blockAtlasExtraIdsFuture;
 	private final SpriteLoaderLoadContext.EmissiveControl blockAtlasEmissiveControl;
 	private final SpriteLoaderLoadContext.EmissiveControl itemAtlasEmissiveControl;
 
-	public SpriteLoaderLoadContextImpl(CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture, CompletableFuture<Boolean> blockAtlasHasEmissivesFuture) {
-		this.allExtraIdsFuture = allExtraIdsFuture;
+	public SpriteLoaderLoadContextImpl(CompletableFuture<Set<Identifier>> blockAtlasExtraIdsFuture, CompletableFuture<Boolean> blockAtlasHasEmissivesFuture) {
+		this.blockAtlasExtraIdsFuture = blockAtlasExtraIdsFuture;
 		blockAtlasEmissiveControl = new EmissiveControlImpl(blockAtlasHasEmissivesFuture);
 		itemAtlasEmissiveControl = new EmissiveControlImpl();
 	}
 
 	@Override
-	public CompletableFuture<@Nullable Set<Identifier>> getExtraIdsFuture(Identifier atlasId) {
-		return extraIdsFutures.computeIfAbsent(atlasId, id -> allExtraIdsFuture.thenApply(allExtraIds -> allExtraIds.get(id)));
+	@Nullable
+	public CompletableFuture<Set<Identifier>> getExtraIdsFuture(Identifier atlasId) {
+		if (atlasId.equals(TextureAtlas.LOCATION_BLOCKS)) {
+			return blockAtlasExtraIdsFuture;
+		}
+		return null;
 	}
 
 	@Override

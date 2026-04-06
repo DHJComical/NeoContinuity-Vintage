@@ -8,12 +8,12 @@ import me.pepperbell.continuity.client.processor.DirectionMaps;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.properties.OrientedConnectingCtmProperties;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class CtmSpriteProvider implements SpriteProvider {
@@ -89,7 +89,7 @@ public class CtmSpriteProvider implements SpriteProvider {
 		}
 
 		@Override
-		public int getTextureAmount(OrientedConnectingCtmProperties properties) {
+		public int getSpriteAmount(OrientedConnectingCtmProperties properties) {
 			return 47;
 		}
 	}

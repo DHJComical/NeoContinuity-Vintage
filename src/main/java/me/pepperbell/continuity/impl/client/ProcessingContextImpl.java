@@ -7,9 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import me.pepperbell.continuity.api.client.ProcessingDataKey;
 import me.pepperbell.continuity.api.client.ProcessingDataKeyRegistry;
 import me.pepperbell.continuity.api.client.QuadProcessor;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 
 public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
 	protected final MutableMesh mutableMesh = Renderer.get().mutableMesh();

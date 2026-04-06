@@ -37,7 +37,6 @@ public class ContinuityConfig {
 
 	public final Option.BooleanOption connectedTextures = addOption(new Option.BooleanOption("connected_textures", true));
 	public final Option.BooleanOption emissiveTextures = addOption(new Option.BooleanOption("emissive_textures", true));
-	public final Option.BooleanOption customBlockLayers = addOption(new Option.BooleanOption("custom_block_layers", true));
 
 	public ContinuityConfig(File file) {
 		this.file = file;

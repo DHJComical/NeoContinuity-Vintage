@@ -9,19 +9,18 @@ import me.pepperbell.continuity.client.config.ContinuityConfig;
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class EmissiveBlockStateModel extends WrapperBlockStateModel {
@@ -94,8 +93,6 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 		protected Predicate<@Nullable Direction> cullTest;
 
 		protected boolean active;
-		protected boolean calculateDefaultLayer;
-		protected boolean isDefaultLayerSolid;
 
 		@Override
 		public boolean transform(MutableQuadView quad) {
@@ -109,18 +106,9 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 				emitter.copyFrom(quad);
 				emitter.emissive(true).diffuseShade(false).ambientOcclusion(TriState.FALSE);
 
-				ChunkSectionLayer renderLayer = quad.renderLayer();
-				if (renderLayer == null) {
-					if (calculateDefaultLayer) {
-						isDefaultLayerSolid = ItemBlockRenderTypes.getChunkRenderType(state) == ChunkSectionLayer.SOLID;
-						calculateDefaultLayer = false;
-					}
-
-					if (isDefaultLayerSolid) {
-						emitter.renderLayer(ChunkSectionLayer.CUTOUT);
-					}
-				} else if (renderLayer == ChunkSectionLayer.SOLID) {
-					emitter.renderLayer(ChunkSectionLayer.CUTOUT);
+				ChunkSectionLayer renderLayer = quad.chunkLayer();
+				if (renderLayer == ChunkSectionLayer.SOLID) {
+					emitter.chunkLayer(ChunkSectionLayer.CUTOUT);
 				}
 
 				QuadUtil.interpolate(emitter, sprite, emissiveSprite);
@@ -139,8 +127,6 @@ public class EmissiveBlockStateModel extends WrapperBlockStateModel {
 			this.cullTest = cullTest;
 
 			active = true;
-			calculateDefaultLayer = true;
-			isDefaultLayerSolid = false;
 		}
 
 		public void reset() {

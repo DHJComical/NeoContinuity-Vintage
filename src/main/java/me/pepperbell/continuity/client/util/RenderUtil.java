@@ -3,16 +3,19 @@ package me.pepperbell.continuity.client.util;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
+import net.fabricmc.fabric.api.client.renderer.v1.sprite.SpriteFinder;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class RenderUtil {
@@ -24,7 +27,11 @@ public final class RenderUtil {
 		if (state == null || tintIndex == -1) {
 			return -1;
 		}
-		return 0xFF000000 | BLOCK_COLORS.getColor(state, level, pos, tintIndex);
+		BlockTintSource tintSource = BLOCK_COLORS.getTintSource(state, tintIndex);
+		if (tintSource == null) {
+			return -1;
+		}
+		return tintSource.colorInWorld(state, level, pos);
 	}
 
 	public static TriState aoFromTintBlock(@Nullable BlockState tintBlock) {
@@ -37,6 +44,10 @@ public final class RenderUtil {
 
 	public static boolean canHaveAO(BlockState state) {
 		return state.getLightEmission() == 0;
+	}
+
+	public static boolean isMissingSprite(TextureAtlasSprite sprite) {
+		return sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation());
 	}
 
 	public static SpriteFinder getSpriteFinder() {

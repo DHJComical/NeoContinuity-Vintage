@@ -1,6 +1,5 @@
 package me.pepperbell.continuity.client.mixin;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -18,7 +17,7 @@ import me.pepperbell.continuity.client.resource.EmissiveSuffixLoader;
 import me.pepperbell.continuity.client.resource.ModelWrappingHandler;
 import me.pepperbell.continuity.client.resource.SpriteLoaderLoadContext;
 import me.pepperbell.continuity.client.resource.SpriteLoaderLoadContextImpl;
-import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -33,7 +32,7 @@ abstract class AtlasManagerMixin {
 	@Inject(method = "reload(Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;Ljava/util/concurrent/Executor;Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;resourceManager()Lnet/minecraft/server/packs/resources/ResourceManager;"))
 	private void continuity$onHeadReload(PreparableReloadListener.SharedState currentReload, Executor prepareExecutor, PreparableReloadListener.PreparationBarrier preparationBarrier, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir, @Local AtlasManager.PendingStitchResults stitchResults) {
 		EmissiveSuffixLoader.load(currentReload.resourceManager());
-		CompletableFuture<Map<Identifier, Set<Identifier>>> allExtraIdsFuture = currentReload.get(CtmResourceReloader.ALL_EXTRA_IDS_FUTURE_KEY);
+		CompletableFuture<Set<Identifier>> blockAtlasExtraIdsFuture = currentReload.get(CtmResourceReloader.BLOCK_ATLAS_EXTRA_IDS_FUTURE_KEY);
 		CompletableFuture<Boolean> wrapEmissiveFuture = currentReload.get(ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY);
 
 		// This shouldn't be necessary, but it prevents a deadlock if for whatever reason the future isn't completed
@@ -42,11 +41,11 @@ abstract class AtlasManagerMixin {
 			wrapEmissiveFuture.complete(false);
 		});
 
-		SpriteLoaderLoadContext.THREAD_LOCAL.set(new SpriteLoaderLoadContextImpl(allExtraIdsFuture, wrapEmissiveFuture));
+		SpriteLoaderLoadContext.THREAD_LOCAL.set(new SpriteLoaderLoadContextImpl(blockAtlasExtraIdsFuture, wrapEmissiveFuture));
 	}
 
 	@Inject(method = "reload(Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;Ljava/util/concurrent/Executor;Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At("RETURN"))
 	private void continuity$onReturnReload(CallbackInfoReturnable<CompletableFuture<Void>> cir) {
-		SpriteLoaderLoadContext.THREAD_LOCAL.set(null);
+		SpriteLoaderLoadContext.THREAD_LOCAL.remove();
 	}
 }

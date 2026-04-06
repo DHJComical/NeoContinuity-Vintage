@@ -94,7 +94,7 @@ public class OverlayPropertiesSection {
 		switch (layerStr1) {
 			case "cutout" -> layer = ChunkSectionLayer.CUTOUT;
 			case "translucent" -> layer = ChunkSectionLayer.TRANSLUCENT;
-			default -> ContinuityClient.LOGGER.warn("Unknown 'layer' value '" + layerStr + " in file '" + resourceId + "' in pack '" + packId + "'");
+			default -> ContinuityClient.LOGGER.warn("Unknown 'layer' value '" + layerStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 		}
 	}
 

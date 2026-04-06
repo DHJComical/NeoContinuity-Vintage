@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.pepperbell.continuity.client.ContinuityClient;
+import me.pepperbell.continuity.client.mixin.StateHolderAccessor;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.resource.ResourceRedirectHandler;
@@ -237,9 +238,9 @@ public final class PropertiesParsingHelper {
 						}
 
 						predicateMap.put(block, state -> {
-							Map<Property<?>, Comparable<?>> targetValueMap = state.getValues();
+							StateHolderAccessor<Block, BlockState> accessor = ((StateHolderAccessor<Block, BlockState>) state);
 							for (Map.Entry<Property<?>, ObjectOpenHashSet<Comparable<?>>> entry : entryArray) {
-								Comparable<?> targetValue = targetValueMap.get(entry.getKey());
+								Comparable<?> targetValue = accessor.continuity$getNullableValue(entry.getKey());
 								if (targetValue != null) {
 									if (!entry.getValue().contains(targetValue)) {
 										return false;

@@ -9,24 +9,24 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockStateModelSet;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.EmptyBlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class SpriteCalculator {
-	private static final BlockModelShaper MODELS = Minecraft.getInstance().getModelManager().getBlockModelShaper();
+	private static final BlockStateModelSet MODELS = Minecraft.getInstance().getModelManager().getBlockStateModelSet();
 
 	private static final EnumMap<Direction, SpriteCache> SPRITE_CACHES = new EnumMap<>(Direction.class);
 
@@ -54,7 +54,7 @@ public final class SpriteCalculator {
 		private final Reference2ObjectOpenHashMap<BlockState, Set<TextureAtlasSprite>> spritesMap = new Reference2ObjectOpenHashMap<>();
 		private final MutableMesh mutableMesh = Renderer.get().mutableMesh();
 		private final CollectingQuadTransform quadTransform;
-		private final RandomSource random = RandomSource.createNewThreadLocalInstance();
+		private final RandomSource random = RandomSource.createThreadLocalInstance();
 		private final StampedLock lock = new StampedLock();
 
 		public SpriteCache(Direction face) {
@@ -106,19 +106,19 @@ public final class SpriteCalculator {
 
 		@Unmodifiable
 		private Set<TextureAtlasSprite> calculateSprites(BlockState state) {
-			BlockStateModel model = MODELS.getBlockModel(state);
+			BlockStateModel model = MODELS.get(state);
 			QuadEmitter emitter = mutableMesh.emitter();
 			quadTransform.clear();
 			emitter.pushTransform(quadTransform);
 			random.setSeed(42);
 			try {
-				model.emitQuads(emitter, EmptyBlockAndTintGetter.INSTANCE, BlockPos.ZERO, state, random, cullFace -> false);
+				model.emitQuads(emitter, BlockAndTintGetter.EMPTY, BlockPos.ZERO, state, random, cullFace -> false);
 			} catch (Exception e) {
 				//
 			}
 			emitter.popTransform();
 			Set<TextureAtlasSprite> sprites = quadTransform.result();
-			return !sprites.isEmpty() ? sprites : Set.of(model.particleIcon());
+			return !sprites.isEmpty() ? sprites : Set.of(model.particleMaterial().sprite());
 		}
 
 		public void clear() {

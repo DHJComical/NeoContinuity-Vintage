@@ -1,8 +1,8 @@
 package me.pepperbell.continuity.client.model;
 
 import me.pepperbell.continuity.impl.client.ContinuityFeatureStatesImpl;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
 
 public class ModelObjectsContainer {
 	public static final ThreadLocal<ModelObjectsContainer> THREAD_LOCAL = ThreadLocal.withInitial(ModelObjectsContainer::new);

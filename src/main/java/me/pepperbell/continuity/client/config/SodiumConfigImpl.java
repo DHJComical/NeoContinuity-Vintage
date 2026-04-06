@@ -20,8 +20,6 @@ public class SodiumConfigImpl implements ConfigEntryPoint {
 						.addOption(asSodiumOption(builder, config, config.connectedTextures)
 								.setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD))
 						.addOption(asSodiumOption(builder, config, config.emissiveTextures)
-								.setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD))
-						.addOption(asSodiumOption(builder, config, config.customBlockLayers)
 								.setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)));
 	}
 

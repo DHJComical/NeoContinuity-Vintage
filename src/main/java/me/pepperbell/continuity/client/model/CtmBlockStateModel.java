@@ -10,15 +10,15 @@ import me.pepperbell.continuity.client.config.ContinuityConfig;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.impl.client.ProcessingContextImpl;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class CtmBlockStateModel extends WrapperBlockStateModel {
@@ -116,7 +116,7 @@ public class CtmBlockStateModel extends WrapperBlockStateModel {
 
 	protected static class CtmQuadTransform implements QuadTransform {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
-		protected final RandomSource random = RandomSource.createNewThreadLocalInstance();
+		protected final RandomSource random = RandomSource.createThreadLocalInstance();
 
 		protected BlockAndTintGetter level;
 		protected BlockPos pos;
