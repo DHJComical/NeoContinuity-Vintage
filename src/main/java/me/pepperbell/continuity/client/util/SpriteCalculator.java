@@ -17,16 +17,16 @@ import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.block.BlockStateModelSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class SpriteCalculator {
-	private static final BlockStateModelSet MODELS = Minecraft.getInstance().getModelManager().getBlockStateModelSet();
+	private static final ModelManager MODEL_MANAGER = Minecraft.getInstance().getModelManager();
 
 	private static final EnumMap<Direction, SpriteCache> SPRITE_CACHES = new EnumMap<>(Direction.class);
 
@@ -106,7 +106,7 @@ public final class SpriteCalculator {
 
 		@Unmodifiable
 		private Set<TextureAtlasSprite> calculateSprites(BlockState state) {
-			BlockStateModel model = MODELS.get(state);
+			BlockStateModel model = MODEL_MANAGER.getBlockStateModelSet().get(state);
 			QuadEmitter emitter = mutableMesh.emitter();
 			quadTransform.clear();
 			emitter.pushTransform(quadTransform);
