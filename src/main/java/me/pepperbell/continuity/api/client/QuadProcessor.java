@@ -2,20 +2,22 @@ package me.pepperbell.continuity.api.client;
 
 import java.util.function.Function;
 
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 
 public interface QuadProcessor {
-	ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context);
+	ProcessingResult processQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context);
 
 	interface ProcessingContext extends ProcessingDataProvider {
-		QuadEmitter getExtraQuadEmitter();
+		/* QuadEmitter */ QuadCollectionBuilder getExtraQuadEmitter();
 	}
 
 	enum ProcessingResult {

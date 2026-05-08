@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+// import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -19,7 +19,7 @@ public final class BiomeHolderManager {
 	private static final Set<Runnable> REFRESH_CALLBACKS = new ReferenceOpenHashSet<>();
 
 	@Nullable
-	private static RegistryAccess registryManager;
+	/* private */ public static RegistryAccess registryManager;
 
 	public static BiomeHolder getOrCreateHolder(Identifier id) {
 		return HOLDER_CACHE.computeIfAbsent(id, BiomeHolder::new);
@@ -30,10 +30,10 @@ public final class BiomeHolderManager {
 	}
 
 	public static void init() {
-		ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) -> {
+		/* ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) -> {
 			registryManager = handler.registryAccess();
 			refreshHolders();
-		}));
+		})); */
 	}
 
 	public static void refreshHolders() {

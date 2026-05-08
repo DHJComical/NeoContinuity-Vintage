@@ -3,6 +3,9 @@ package me.pepperbell.continuity.client.processor.overlay;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
+import net.minecraft.util.TriState;
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
@@ -18,9 +21,9 @@ import me.pepperbell.continuity.client.properties.overlay.StandardOverlayCtmProp
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.SpriteCalculator;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.util.TriState;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -71,11 +74,11 @@ public class StandardOverlayQuadProcessor extends AbstractQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
-		Direction lightFace = quad.lightFace();
+	public ProcessingResult processQuadInner(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+		Direction lightFace = /* quad.lightFace() */ quad.direction();
 		SpriteCollector collector = getSprites(level, pos, appearanceState, state, lightFace, sprite, DirectionMaps.getMap(lightFace)[0], context);
 		if (collector != null) {
-			QuadEmitter emitter = context.getExtraQuadEmitter();
+			/* QuadEmitter */ QuadCollectionBuilder emitter = context.getExtraQuadEmitter();
 			int tintColor = RenderUtil.getTintColor(tintBlock, level, pos, tintIndex);
 			for (int i = 0; i < collector.spriteAmount; i++) {
 				QuadUtil.emitOverlayQuad(emitter, lightFace, collector.sprites[i], tintColor, layer, ao);

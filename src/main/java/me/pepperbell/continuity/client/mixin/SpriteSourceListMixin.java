@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,7 +33,8 @@ import net.minecraft.server.packs.resources.ResourceManager;
 @Mixin(SpriteSourceList.class)
 abstract class SpriteSourceListMixin {
 	@ModifyVariable(method = "<init>(Ljava/util/List;)V", at = @At(value = "LOAD", ordinal = 0), argsOnly = true, ordinal = 0)
-	private List<SpriteSource> continuity$modifySources(List<SpriteSource> sources) {
+	// private List<SpriteSource> continuity$modifySources(List<SpriteSource> sources) {
+	private static List<SpriteSource> continuity$modifySources(List<SpriteSource> sources) {
 		SpriteSourceListInitContext context = SpriteSourceListInitContext.THREAD_LOCAL.get();
 		if (context != null) {
 			Set<Identifier> extraIds = context.getExtraIds();
@@ -54,8 +56,10 @@ abstract class SpriteSourceListMixin {
 		return sources;
 	}
 
-	@Inject(method = "list(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/List;", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableList;builder()Lcom/google/common/collect/ImmutableList$Builder;", remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void continuity$afterLoadSources(ResourceManager resourceManager, CallbackInfoReturnable<List<Function<SpriteResourceLoader, SpriteContents>>> cir, Map<Identifier, SpriteSource.DiscardableLoader> loaders) {
+	// @Inject(method = "list(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/List;", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableList;builder()Lcom/google/common/collect/ImmutableList$Builder;", remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
+	@Inject(method = "list(Lnet/minecraft/server/packs/resources/ResourceManager;Ljava/util/Set;)Ljava/util/List;", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableList;builder()Lcom/google/common/collect/ImmutableList$Builder;", remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
+	// private void continuity$afterLoadSources(ResourceManager resourceManager, CallbackInfoReturnable<List<Function<SpriteResourceLoader, SpriteContents>>> cir, Map<Identifier, SpriteSource.DiscardableLoader> loaders) {
+	private void continuity$afterLoadSources(ResourceManager resourceManager, Set<MetadataSectionType<?>> additionalMetadata, CallbackInfoReturnable<List<Function<SpriteResourceLoader, SpriteContents>>> cir, Map<Identifier, SpriteSource.DiscardableLoader> loaders) {
 		SpriteSourceListListContext context = SpriteSourceListListContext.THREAD_LOCAL.get();
 		if (context != null) {
 			String emissiveSuffix = EmissiveSuffixLoader.getEmissiveSuffix();

@@ -1,5 +1,6 @@
 package me.pepperbell.continuity.client.processor.simple;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
@@ -8,7 +9,7 @@ import me.pepperbell.continuity.client.processor.DirectionMaps;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.properties.OrientedConnectingCtmProperties;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -34,14 +35,14 @@ public class HorizontalVerticalSpriteProvider extends HorizontalSpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
+	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
 		Direction[] directions = DirectionMaps.getDirections(orientationMode, quad, appearanceState);
 		BlockPos.MutableBlockPos mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = getConnections(directions, mutablePos, level, pos, appearanceState, state, quad.lightFace(), sprite);
+		int connections = getConnections(directions, mutablePos, level, pos, appearanceState, state, /* quad.lightFace() */ quad.direction(), sprite);
 		if (connections != 0) {
 			return sprites[SPRITE_INDEX_MAP[connections]];
 		} else {
-			int secondaryConnections = getSecondaryConnections(directions, mutablePos, level, pos, appearanceState, state, quad.lightFace(), sprite);
+			int secondaryConnections = getSecondaryConnections(directions, mutablePos, level, pos, appearanceState, state, /* quad.lightFace() */ quad.direction(), sprite);
 			return sprites[SECONDARY_SPRITE_INDEX_MAP[secondaryConnections]];
 		}
 	}

@@ -4,13 +4,14 @@ import java.util.EnumSet;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.processor.BaseProcessingPredicate;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import me.pepperbell.continuity.client.util.QuadUtil;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ public class OverlayProcessingPredicate extends BaseProcessingPredicate {
 	}
 
 	@Override
-	public boolean shouldProcessQuad(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
+	public boolean shouldProcessQuad(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
 		if (!super.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, dataProvider)) {
 			return false;
 		}

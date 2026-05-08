@@ -2,24 +2,28 @@ package me.pepperbell.continuity.impl.client;
 
 import java.util.List;
 
+// import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableMeshImpl;
+import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataKey;
 import me.pepperbell.continuity.api.client.ProcessingDataKeyRegistry;
 import me.pepperbell.continuity.api.client.QuadProcessor;
-import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 
 public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
-	protected final MutableMesh mutableMesh = Renderer.get().mutableMesh();
+	// protected final MutableMesh mutableMesh = Renderer.get().mutableMesh();
+	protected QuadCollectionBuilder mutableMesh = new QuadCollectionBuilder();
 	protected final Object[] processingData = new Object[ProcessingDataKeyRegistry.get().getRegisteredAmount()];
 
 	@Override
-	public QuadEmitter getExtraQuadEmitter() {
-		return mutableMesh.emitter();
-	}
+	public QuadCollectionBuilder getExtraQuadEmitter() {
+		return mutableMesh /* .emitter() */;
 
+	}
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getData(ProcessingDataKey<T> key) {
@@ -38,12 +42,17 @@ public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
 		return (T) processingData[key.getRawId()];
 	}
 
-	public void outputTo(QuadEmitter emitter) {
+	/* public void outputTo(QuadEmitter emitter) {
 		mutableMesh.outputTo(emitter);
+	} */
+
+	public QuadCollection build() {
+		return mutableMesh.build();
 	}
 
 	public void reset() {
-		mutableMesh.clear();
+		// mutableMesh.clear();
+		mutableMesh.reset();
 		resetData();
 	}
 

@@ -4,11 +4,13 @@ import java.util.EnumSet;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
+import me.pepperbell.continuity.client.mixinterface.BlockAndTintGetterExtension;
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -37,14 +39,14 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 	}
 
 	@Override
-	public boolean shouldProcessQuad(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
+	public boolean shouldProcessQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
 		if (heightPredicate != null) {
 			if (!heightPredicate.test(pos.getY())) {
 				return false;
 			}
 		}
 		if (faces != null) {
-			Direction face = quad.lightFace();
+			Direction face = /* quad.lightFace() */ quad.direction();
  			if (appearanceState.hasProperty(BlockStateProperties.AXIS)) {
  				Direction.Axis axis = appearanceState.getValue(BlockStateProperties.AXIS);
  				if (axis == Direction.Axis.X) {
@@ -84,7 +86,9 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 		@Nullable
 		public Biome get(BlockAndTintGetter level, BlockPos pos) {
 			if (invalid) {
-				biome = level.hasBiomes() ? level.getBiomeFabric(pos).value() : null;
+				// biome = level.hasBiomes() ? level.getBiomeFabric(pos).value() : null;
+				BlockAndTintGetterExtension extension = (BlockAndTintGetterExtension) level;
+				biome = extension.continuity$hasBiome() ? extension.continuity$getBiome(pos).value() : null;
 				invalid = false;
 			}
 			return biome;

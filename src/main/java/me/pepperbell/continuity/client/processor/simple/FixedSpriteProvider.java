@@ -1,10 +1,11 @@
 package me.pepperbell.continuity.client.processor.simple;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -20,7 +21,7 @@ public class FixedSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
+	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
 		return this.sprite;
 	}
 

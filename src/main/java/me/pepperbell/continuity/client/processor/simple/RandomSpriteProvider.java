@@ -1,5 +1,6 @@
 package me.pepperbell.continuity.client.processor.simple;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
@@ -8,7 +9,7 @@ import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RandomCtmProperties;
 import me.pepperbell.continuity.client.util.MathUtil;
 import me.pepperbell.continuity.client.util.RandomIndexProvider;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -34,8 +35,8 @@ public class RandomSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(QuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
-		Direction face = quad.lightFace();
+	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
+		Direction face = /* quad.lightFace() */ quad.direction();
 
 		int x = pos.getX();
 		int y = pos.getY();

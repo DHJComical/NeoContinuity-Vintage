@@ -1,5 +1,11 @@
 package me.pepperbell.continuity.client;
 
+import me.pepperbell.continuity.client.config.ModMenuApiImpl;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,41 +42,45 @@ import me.pepperbell.continuity.client.properties.overlay.OrientedConnectingOver
 import me.pepperbell.continuity.client.properties.overlay.RandomOverlayCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.RepeatOverlayCtmProperties;
 import me.pepperbell.continuity.client.properties.overlay.StandardOverlayCtmProperties;
-import me.pepperbell.continuity.client.resource.CtmResourceReloader;
+// import me.pepperbell.continuity.client.resource.CtmResourceReloader;
 import me.pepperbell.continuity.client.resource.ModelWrappingHandler;
-import me.pepperbell.continuity.client.util.RenderUtil;
+// import me.pepperbell.continuity.client.util.RenderUtil;
 import me.pepperbell.continuity.client.util.biome.BiomeHolderManager;
 import me.pepperbell.continuity.impl.client.ProcessingDataKeyRegistryImpl;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
-import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
-import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.chat.Component;
+// import net.fabricmc.api.ClientModInitializer;
+// import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+// import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
+// import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
+// import net.fabricmc.loader.api.FabricLoader;
+// import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackType;
+// import net.minecraft.server.packs.PackType;
 
-public class ContinuityClient implements ClientModInitializer {
+@Mod(value = ContinuityClient.ID, dist = Dist.CLIENT)
+public class ContinuityClient /*implements ClientModInitializer*/ {
 	public static final String ID = "continuity";
 	public static final String NAME = "Continuity";
 	public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
-	@Override
-	public void onInitializeClient() {
+	/* @Override
+	public void onInitializeClient() { */
+	public ContinuityClient(IEventBus modEventBus, ModContainer modContainer) {
+		modContainer.registerExtensionPoint(IConfigScreenFactory.class, ModMenuApiImpl.getModConfigScreenFactory());
+
 		ProcessingDataKeyRegistryImpl.INSTANCE.init();
 		BiomeHolderManager.init();
 		ProcessingDataKeys.init();
 		ModelWrappingHandler.init();
 
-		ResourceLoader resourceLoader = ResourceLoader.get(PackType.CLIENT_RESOURCES);
+		/* ResourceLoader resourceLoader = ResourceLoader.get(PackType.CLIENT_RESOURCES);
 		resourceLoader.registerReloadListener(RenderUtil.ReloadListener.ID, RenderUtil.ReloadListener.INSTANCE);
 		resourceLoader.addListenerOrdering(ResourceReloaderKeys.Client.ATLAS, RenderUtil.ReloadListener.ID);
-		resourceLoader.registerReloadListener(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE);
+		resourceLoader.registerReloadListener(CtmResourceReloader.ID, CtmResourceReloader.INSTANCE); */
 
-		FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
+		/* FabricLoader.getInstance().getModContainer(ID).ifPresent(container -> {
 			ResourceLoader.registerBuiltinPack(asId("default"), container, Component.translatable("resourcePack.continuity.default.name"), PackActivationType.NORMAL);
 			ResourceLoader.registerBuiltinPack(asId("glass_pane_culling_fix"), container, Component.translatable("resourcePack.continuity.glass_pane_culling_fix.name"), PackActivationType.NORMAL);
-		});
+		}); */
 
 		CtmLoaderRegistry registry = CtmLoaderRegistry.get();
 		CtmLoader<?> loader;

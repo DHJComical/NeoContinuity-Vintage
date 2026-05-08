@@ -4,9 +4,12 @@
   "package": "me.pepperbell.continuity.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "biomes.BlockAndTintGetterMixin",
+    "biomes.RenderSectionRegionMixin",
     "AtlasManagerMixin",
     "CuboidItemModelWrapperMixin",
     "CuboidItemModelWrapperUnbakedMixin",
+    "LevelRendererMixin",
     "MultiPackResourceManagerMixin",
     "SpriteLoaderMixin",
     "SpriteSourceListMixin",

@@ -25,14 +25,15 @@ public class CtmResourceReloader implements PreparableReloadListener {
 	@Override
 	public void prepareSharedState(SharedState currentReload) {
 		currentReload.set(BLOCK_ATLAS_EXTRA_IDS_FUTURE_KEY, new CompletableFuture<>());
-		currentReload.set(ModelWrappingHandler.WRAP_CTM_FUTURE_KEY, new CompletableFuture<>());
+		// currentReload.set(ModelWrappingHandler.WRAP_CTM_FUTURE_KEY, new CompletableFuture<>());
+		ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY = new CompletableFuture<>();
 	}
 
 	@Override
 	public CompletableFuture<Void> reload(SharedState currentReload, Executor prepareExecutor, PreparationBarrier preparationBarrier, Executor applyExecutor) {
 		ResourceManager resourceManager = currentReload.resourceManager();
 		CompletableFuture<Set<Identifier>> blockAtlasExtraIdsFuture = currentReload.get(BLOCK_ATLAS_EXTRA_IDS_FUTURE_KEY);
-		CompletableFuture<Boolean> wrapCtmFuture = currentReload.get(ModelWrappingHandler.WRAP_CTM_FUTURE_KEY);
+		CompletableFuture<Boolean> wrapCtmFuture = /* currentReload.get( */ ModelWrappingHandler.WRAP_CTM_FUTURE_KEY /* ) */;
 		CompletableFuture<CtmPropertiesLoader.LoadingResult> ctmLoadingResultFuture = CompletableFuture.supplyAsync(() -> CtmPropertiesLoader.loadAllWithState(resourceManager), prepareExecutor).whenComplete((ctmLoadingResult, t) -> {
 			if (ctmLoadingResult != null) {
 				blockAtlasExtraIdsFuture.complete(ctmLoadingResult.getBlockAtlasSpriteDependencies());

@@ -1,8 +1,9 @@
 package me.pepperbell.continuity.client.processor;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.apache.commons.lang3.ArrayUtils;
 
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -51,7 +52,7 @@ public final class DirectionMaps {
 		return DIRECTION_MAPS[direction.ordinal()];
 	}
 
-	public static Direction[] getDirections(OrientationMode orientationMode, QuadView quad, BlockState state) {
-		return getMap(quad.lightFace())[orientationMode.getOrientation(quad, state)];
+	public static Direction[] getDirections(OrientationMode orientationMode, /* QuadView */ MutableQuad quad, BlockState state) {
+		return getMap(/* quad.lightFace() */ quad.direction())[orientationMode.getOrientation(quad, state)];
 	}
 }

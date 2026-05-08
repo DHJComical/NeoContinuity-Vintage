@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.util.Collections;
 import java.util.Map;
 
+import net.neoforged.fml.loading.FMLPaths;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +21,13 @@ import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
-import net.fabricmc.loader.api.FabricLoader;
+// import net.fabricmc.loader.api.FabricLoader;
 
 public class ContinuityConfig {
 	protected static final Logger LOGGER = LoggerFactory.getLogger("Continuity Config");
 	protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-	public static final ContinuityConfig INSTANCE = new ContinuityConfig(FabricLoader.getInstance().getConfigDir().resolve("continuity.json").toFile());
+	public static final ContinuityConfig INSTANCE = new ContinuityConfig(/* FabricLoader.getInstance().getConfigDir() */ FMLPaths.CONFIGDIR.get().resolve("continuity.json").toFile());
 	static {
 		INSTANCE.load();
 	}

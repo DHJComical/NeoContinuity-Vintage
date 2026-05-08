@@ -1,21 +1,23 @@
 package me.pepperbell.continuity.client.util;
 
-import java.util.function.Consumer;
-
+// import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableMeshImpl;
+import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
+		import net.minecraft.util.TriState;
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.client.mixinterface.TextureAtlasSpriteExtension;
-import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MeshView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadAtlas;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.model.MeshQuadCollection;
-import net.fabricmc.fabric.api.client.renderer.v1.sprite.SpriteFinderGetter;
-import net.fabricmc.fabric.api.util.TriState;
+// import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MeshView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadAtlas;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.model.MeshQuadCollection;
+// import net.fabricmc.fabric.api.client.renderer.v1.sprite.SpriteFinderGetter;
+// import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -25,7 +27,7 @@ import net.minecraft.client.resources.model.geometry.QuadCollection;
 import net.minecraft.core.Direction;
 
 public final class QuadUtil {
-	public static void interpolate(MutableQuadView quad, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
+	public static void interpolate(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
 		float oldMinU = oldSprite.getU0();
 		float oldMinV = oldSprite.getV0();
 		float newMinU = newSprite.getU0();
@@ -33,12 +35,13 @@ public final class QuadUtil {
 		float uFactor = (newSprite.getU1() - newMinU) / (oldSprite.getU1() - oldMinU);
 		float vFactor = (newSprite.getV1() - newMinV) / (oldSprite.getV1() - oldMinV);
 		for (int i = 0; i < 4; i++) {
-			quad.uv(i,
+			quad. /* uv */ setUv(i,
 					newMinU + (quad.u(i) - oldMinU) * uFactor,
 					newMinV + (quad.v(i) - oldMinV) * vFactor
 			);
 		}
-		quad.animated(newSprite.contents().isAnimated());
+		// quad.animated(newSprite.contents().isAnimated());
+		quad.setSprite(newSprite, quad.chunkLayer(), quad.itemRenderType());
 	}
 
 	public static void interpolate(BakedQuad quad, PackedUvContainer output, TextureAtlasSprite oldSprite, TextureAtlasSprite newSprite) {
@@ -57,25 +60,80 @@ public final class QuadUtil {
 		}
 	}
 
-	public static void emitOverlayQuad(QuadEmitter emitter, Direction face, TextureAtlasSprite sprite, int color, ChunkSectionLayer chunkLayer, TriState ao) {
-		emitter.square(face, 0, 0, 1, 1, 0);
-		emitter.color(color, color, color, color);
-		emitter.uv(0, sprite.getU0(), sprite.getV0());
-		emitter.uv(1, sprite.getU0(), sprite.getV1());
-		emitter.uv(2, sprite.getU1(), sprite.getV1());
-		emitter.uv(3, sprite.getU1(), sprite.getV0());
-		emitter.atlas(QuadAtlas.BLOCK);
-		emitter.animated(sprite.contents().isAnimated());
-		emitter.chunkLayer(chunkLayer);
-		emitter.itemRenderType(chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet());
-		emitter.ambientOcclusion(ao);
-		emitter.emit();
+	public static void square(MutableQuad quad, Direction nominalFace, float left, float bottom, float right, float top, float depth) {
+		/* if (Math.abs(depth) < CULL_FACE_EPSILON) {
+			cullFace(nominalFace);
+			depth = 0; // avoid any inconsistency for face quads
+		} else {
+			cullFace(null);
+		} */
+
+		// nominalFace(nominalFace);
+		quad.setDirection(nominalFace);
+		switch (nominalFace) {
+			case UP:
+				depth = 1 - depth;
+				top = 1 - top;
+				bottom = 1 - bottom;
+
+			case DOWN:
+				quad.setPosition(0, left, depth, top); // pos(0, left, depth, top);
+				quad.setPosition(1, left, depth, bottom); // pos(1, left, depth, bottom);
+				quad.setPosition(2, right, depth, bottom); // pos(2, right, depth, bottom);
+				quad.setPosition(3, right, depth, top); // pos(3, right, depth, top);
+				break;
+
+			case EAST:
+				depth = 1 - depth;
+				left = 1 - left;
+				right = 1 - right;
+
+			case WEST:
+				quad.setPosition(0, depth, top, left); // pos(0, depth, top, left);
+				quad.setPosition(1, depth, bottom, left); // pos(1, depth, bottom, left);
+				quad.setPosition(2, depth, bottom, right); // pos(2, depth, bottom, right);
+				quad.setPosition(3, depth, top, right); // pos(3, depth, top, right);
+				break;
+
+			case SOUTH:
+				depth = 1 - depth;
+				left = 1 - left;
+				right = 1 - right;
+
+			case NORTH:
+				quad.setPosition(0, 1 - left, top, depth); // pos(0, 1 - left, top, depth);
+				quad.setPosition(1, 1 - left, bottom, depth); // pos(1, 1 - left, bottom, depth);
+				quad.setPosition(2, 1 - right, bottom, depth); // pos(2, 1 - right, bottom, depth);
+				quad.setPosition(3, 1 - right, top, depth); // pos(3, 1 - right, top, depth);
+				break;
+		}
+
+		// return this;
 	}
 
-	public static boolean isQuadUnitSquare(QuadView quad) {
+	public static void emitOverlayQuad(/* QuadEmitter */ QuadCollectionBuilder emitter, Direction face, TextureAtlasSprite sprite, int color, ChunkSectionLayer chunkLayer, TriState ao) {
+		MutableQuad quad = emitter.getScratchQuad();
+
+		square(quad, face, 0, 0, 1, 1, 0); // quad.square(face, 0, 0, 1, 1, 0);
+
+		quad.setColor(color); // emitter.color(color, color, color, color);
+		quad.setUv(0, sprite.getU0(), sprite.getV0()); // emitter.uv(0, sprite.getU0(), sprite.getV0());
+		quad.setUv(1, sprite.getU0(), sprite.getV1()); // emitter.uv(1, sprite.getU0(), sprite.getV1());
+		quad.setUv(2, sprite.getU1(), sprite.getV1()); // emitter.uv(2, sprite.getU1(), sprite.getV1());
+		quad.setUv(3, sprite.getU1(), sprite.getV0()); // emitter.uv(3, sprite.getU1(), sprite.getV0());
+		/* emitter.atlas(QuadAtlas.BLOCK);
+		emitter.animated(sprite.contents().isAnimated());
+		emitter.chunkLayer(chunkLayer);
+		emitter.itemRenderType(chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet()); */
+		quad.setSprite(sprite, chunkLayer, chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet());
+		quad.setAmbientOcclusion(ao.toBoolean(true));
+		emitter.emitQuad(); // emitter.emit();
+	}
+
+	public static boolean isQuadUnitSquare(/* QuadView */ MutableQuad quad) {
 		int indexA;
 		int indexB;
-		switch (quad.lightFace().getAxis()) {
+		switch (/* quad.lightFace() */ quad.direction().getAxis()) {
 			case X:
 				indexA = 1;
 				indexB = 2;
@@ -93,11 +151,11 @@ public final class QuadUtil {
 		}
 
 		for (int i = 0; i < 4; i++) {
-			float a = quad.posByIndex(i, indexA);
+			float a = quad. /*posByIndex */ positionComponent(i, indexA);
 			if ((a >= 0.0001f || a <= -0.0001f) && (a >= 1.0001f || a <= 0.9999f)) {
 				return false;
 			}
-			float b = quad.posByIndex(i, indexB);
+			float b = quad. /* posByIndex */ positionComponent(i, indexB);
 			if ((b >= 0.0001f || b <= -0.0001f) && (b >= 1.0001f || b <= 0.9999f)) {
 				return false;
 			}
@@ -119,7 +177,7 @@ public final class QuadUtil {
 	 *     <li>7 - 270 degree counterclockwise rotation, clockwise UV winding order</li>
 	 * </ul>
 	 */
-	public static int getTextureOrientation(QuadView quad) {
+	public static int getTextureOrientation(/* QuadView */ MutableQuad quad) {
 		// Texture matrix
 		float tm00 = quad.u(3) - quad.u(1);
 		float tm01 = quad.v(3) - quad.v(1);
@@ -139,7 +197,7 @@ public final class QuadUtil {
 		int xAxisSign;
 		int yAxis;
 		int yAxisSign;
-		switch (quad.lightFace()) {
+		switch (/* quad.lightFace() */ quad.direction()) {
 			case DOWN -> {
 				xAxis = 0; // +X
 				xAxisSign = 1;
@@ -181,10 +239,10 @@ public final class QuadUtil {
 			}
 		}
 		// Position matrix
-		float pm00 = quad.posByIndex(3, xAxis) - quad.posByIndex(1, xAxis);
-		float pm01 = quad.posByIndex(3, yAxis) - quad.posByIndex(1, yAxis);
-		float pm10 = quad.posByIndex(2, xAxis) - quad.posByIndex(0, xAxis);
-		float pm11 = quad.posByIndex(2, yAxis) - quad.posByIndex(0, yAxis);
+		float pm00 = quad. /* posByIndex */ positionComponent(3, xAxis) - quad. /* posByIndex */ positionComponent(1, xAxis);
+		float pm01 = quad. /* posByIndex */ positionComponent(3, yAxis) - quad. /* posByIndex */ positionComponent(1, yAxis);
+		float pm10 = quad. /* posByIndex */ positionComponent(2, xAxis) - quad. /* posByIndex */ positionComponent(0, xAxis);
+		float pm11 = quad. /* posByIndex */ positionComponent(2, yAxis) - quad. /* posByIndex */ positionComponent(0, yAxis);
 
 		// Texture up vector in projected world space
 		// Computed as (position matrix * inverse texture matrix * [0; -1]); [0; -1] is the texture up vector in texture space
@@ -199,15 +257,15 @@ public final class QuadUtil {
 	}
 
 	@Nullable
-	public static QuadCollection createEmissiveQuads(QuadCollection quads, @Nullable SpriteFinderGetter spriteFinderGetter) {
-		if (quads instanceof MeshQuadCollection meshQuadCollection) {
+	public static QuadCollection createEmissiveQuads(QuadCollection quads /* , @Nullable SpriteFinderGetter spriteFinderGetter */) {
+		/* if (quads instanceof MeshQuadCollection meshQuadCollection) {
 			if (spriteFinderGetter == null) {
 				return null;
 			}
 
 			Mesh emissiveMesh = createEmissiveMesh(meshQuadCollection.getMesh(), spriteFinderGetter);
 			return emissiveMesh != null ? new MeshQuadCollection(emissiveMesh) : null;
-		}
+		} */
 
 		QuadCollection.Builder emissiveQuadsBuilder = null;
 		PackedUvContainer output = null;
@@ -229,7 +287,7 @@ public final class QuadUtil {
 		return emissiveQuadsBuilder != null ? emissiveQuadsBuilder.build() : null;
 	}
 
-	@Nullable
+	/* Nullable
 	public static Mesh createEmissiveMesh(MeshView mesh, SpriteFinderGetter spriteFinderGetter) {
 		var quadConsumer = new Consumer<QuadView>() {
 			@Nullable
@@ -256,7 +314,7 @@ public final class QuadUtil {
 		};
 		mesh.forEach(quadConsumer);
 		return quadConsumer.emissiveMeshBuilder != null ? quadConsumer.emissiveMeshBuilder.immutableCopy() : null;
-	}
+	} */
 
 	public static class PackedUvContainer {
 		public long packedUV0;

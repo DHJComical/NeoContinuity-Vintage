@@ -1,5 +1,6 @@
 package me.pepperbell.continuity.client.processor.simple;
 
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jetbrains.annotations.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
@@ -9,7 +10,7 @@ import me.pepperbell.continuity.client.processor.ProcessingPredicate;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,7 @@ public class SimpleQuadProcessor implements QuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+	public ProcessingResult processQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
 		if (!processingPredicate.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, context)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
@@ -34,7 +35,7 @@ public class SimpleQuadProcessor implements QuadProcessor {
 		return process(quad, sprite, newSprite);
 	}
 
-	public static ProcessingResult process(MutableQuadView quad, TextureAtlasSprite oldSprite, @Nullable TextureAtlasSprite newSprite) {
+	public static ProcessingResult process(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite oldSprite, @Nullable TextureAtlasSprite newSprite) {
 		if (newSprite == null) {
 			return ProcessingResult.STOP;
 		}

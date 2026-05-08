@@ -1,26 +1,30 @@
 package me.pepperbell.continuity.client.util;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import org.jetbrains.annotations.Unmodifiable;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+// import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
-import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
+// import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadTransform;
+// import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+// import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.core.BlockPos;
+// import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,7 +39,7 @@ public final class SpriteCalculator {
 			SPRITE_CACHES.put(direction, new SpriteCache(direction));
 		}
 
-		InvalidateRenderStateCallback.EVENT.register(SpriteCalculator::clearCache);
+		// InvalidateRenderStateCallback.EVENT.register(SpriteCalculator::clearCache);
 	}
 
 	@Unmodifiable
@@ -52,14 +56,16 @@ public final class SpriteCalculator {
 	private static class SpriteCache {
 		private final Direction face;
 		private final Reference2ObjectOpenHashMap<BlockState, Set<TextureAtlasSprite>> spritesMap = new Reference2ObjectOpenHashMap<>();
-		private final MutableMesh mutableMesh = Renderer.get().mutableMesh();
-		private final CollectingQuadTransform quadTransform;
+		// private final MutableMesh mutableMesh = Renderer.get().mutableMesh();
+		// private final CollectingQuadTransform quadTransform;
+		private final List<BlockStateModelPart> scratchList;
 		private final RandomSource random = RandomSource.createThreadLocalInstance();
 		private final StampedLock lock = new StampedLock();
 
 		public SpriteCache(Direction face) {
 			this.face = face;
-			quadTransform = new CollectingQuadTransform(face);
+			// quadTransform = new CollectingQuadTransform(face);
+			scratchList = new ArrayList<>();
 		}
 
 		@Unmodifiable
@@ -105,9 +111,10 @@ public final class SpriteCalculator {
 		}
 
 		@Unmodifiable
+		@SuppressWarnings("deprecated")
 		private Set<TextureAtlasSprite> calculateSprites(BlockState state) {
 			BlockStateModel model = MODEL_MANAGER.getBlockStateModelSet().get(state);
-			QuadEmitter emitter = mutableMesh.emitter();
+			/* QuadEmitter emitter = mutableMesh.emitter();
 			quadTransform.clear();
 			emitter.pushTransform(quadTransform);
 			random.setSeed(42);
@@ -117,7 +124,26 @@ public final class SpriteCalculator {
 				//
 			}
 			emitter.popTransform();
-			Set<TextureAtlasSprite> sprites = quadTransform.result();
+			Set<TextureAtlasSprite> sprites = quadTransform.result(); */
+
+			model.collectParts(random, scratchList);
+
+			ObjectOpenHashSet<TextureAtlasSprite> sprites = new ObjectOpenHashSet<>();
+
+			for (BlockStateModelPart part : scratchList) {
+				for (Direction direction : RenderUtil.DIRECTIONS) {
+					for (BakedQuad quad : part.getQuads(direction)) {
+						sprites.add(quad.materialInfo().sprite());
+					}
+				}
+
+				for (BakedQuad quad : part.getQuads(null)) {
+					sprites.add(quad.materialInfo().sprite());
+				}
+			}
+
+			scratchList.clear();
+
 			return !sprites.isEmpty() ? sprites : Set.of(model.particleMaterial().sprite());
 		}
 
@@ -125,13 +151,13 @@ public final class SpriteCalculator {
 			long writeStamp = lock.writeLock();
 			try {
 				spritesMap.clear();
-				quadTransform.clear();
+				// quadTransform.clear();
 			} finally {
 				lock.unlockWrite(writeStamp);
 			}
 		}
 
-		private static class CollectingQuadTransform implements QuadTransform {
+		/* private static class CollectingQuadTransform implements QuadTransform {
 			private final Direction face;
 			private final List<TextureAtlasSprite> sprites = new ObjectArrayList<>();
 
@@ -155,6 +181,6 @@ public final class SpriteCalculator {
 			public Set<TextureAtlasSprite> result() {
 				return Set.copyOf(sprites);
 			}
-		}
+		} */
 	}
 }

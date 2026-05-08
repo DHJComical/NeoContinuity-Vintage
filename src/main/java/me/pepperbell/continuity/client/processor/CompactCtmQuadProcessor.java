@@ -3,6 +3,8 @@ package me.pepperbell.continuity.client.processor;
 import java.util.List;
 import java.util.function.Function;
 
+import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
+import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +19,9 @@ import me.pepperbell.continuity.client.properties.CompactConnectingCtmProperties
 import me.pepperbell.continuity.client.util.MathUtil;
 import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -68,11 +70,11 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(MutableQuadView quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+	public ProcessingResult processQuadInner(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
 		int orientation = orientationMode.getOrientation(quad, appearanceState);
-		Direction[] directions = DirectionMaps.getMap(quad.lightFace())[orientation];
+		Direction[] directions = DirectionMaps.getMap(/* quad.lightFace() */ quad.direction())[orientation];
 		BlockPos.MutableBlockPos mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = CtmSpriteProvider.getConnections(directions, connectionPredicate, innerSeams, mutablePos, level, pos, appearanceState, state, quad.lightFace(), sprite);
+		int connections = CtmSpriteProvider.getConnections(directions, connectionPredicate, innerSeams, mutablePos, level, pos, appearanceState, state, /* quad.lightFace() */ quad.direction(), sprite);
 
 		//
 
@@ -159,7 +161,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 			VertexContainer vertexContainer = context.getData(ProcessingDataKeys.VERTEX_CONTAINER);
 			vertexContainer.fillBaseVertices(quad);
 
-			QuadEmitter extraQuadEmitter = context.getExtraQuadEmitter();
+			/* QuadEmitter */ QuadCollectionBuilder extraQuadEmitter = context.getExtraQuadEmitter();
 
 			if (split01 & split12 & split23 & split30) {
 				float delta01;
@@ -384,7 +386,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 			VertexContainer vertexContainer = context.getData(ProcessingDataKeys.VERTEX_CONTAINER);
 			vertexContainer.fillBaseVertices(quad);
 
-			QuadEmitter extraQuadEmitter = context.getExtraQuadEmitter();
+			/* QuadEmitter */ QuadCollectionBuilder extraQuadEmitter = context.getExtraQuadEmitter();
 
 			if (firstSplit) {
 				float delta01;
@@ -475,30 +477,30 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 		return 0;
 	}
 
-	protected void tryInterpolate(MutableQuadView quad, TextureAtlasSprite oldSprite, int spriteIndex) {
+	protected void tryInterpolate(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite oldSprite, int spriteIndex) {
 		TextureAtlasSprite newSprite = sprites[spriteIndex];
 		if (!RenderUtil.isMissingSprite(newSprite)) {
 			QuadUtil.interpolate(quad, oldSprite, newSprite);
 		}
 	}
 
-	protected void splitHalf(QuadView quad, TextureAtlasSprite sprite, VertexContainer vertexContainer, int id, QuadEmitter quadEmitter, int spriteIndex) {
-		quadEmitter.copyFrom(quad);
-		vertexContainer.lerpedVertices[(id + 1) % 4].writeToQuad(quadEmitter, (id + 2) % 4);
+	protected void splitHalf(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, VertexContainer vertexContainer, int id, /* QuadEmitter */ QuadCollectionBuilder quadEmitter, int spriteIndex) {
+		var toEmit = quadEmitter.getScratchQuad(quad); // quadEmitter.copyFrom(quad);
+		vertexContainer.lerpedVertices[(id + 1) % 4].writeToQuad(/* quadEmitter */ toEmit, (id + 2) % 4);
 		int id3 = (id + 3) % 4;
-		vertexContainer.lerpedVertices[id3].writeToQuad(quadEmitter, id3);
-		tryInterpolate(quadEmitter, sprite, spriteIndex);
-		quadEmitter.emit();
+		vertexContainer.lerpedVertices[id3].writeToQuad(/* quadEmitter */ toEmit, id3);
+		tryInterpolate(/* quadEmitter */ toEmit, sprite, spriteIndex);
+		quadEmitter.emitQuad(); // quadEmitter.emit();
 	}
 
-	protected void splitQuadrant(QuadView quad, TextureAtlasSprite sprite, VertexContainer vertexContainer, int id, QuadEmitter quadEmitter, int spriteIndex) {
-		quadEmitter.copyFrom(quad);
-		vertexContainer.lerpedVertices[id].writeToQuad(quadEmitter, (id + 1) % 4);
-		vertexContainer.vertex4.writeToQuad(quadEmitter, (id + 2) % 4);
+	protected void splitQuadrant(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, VertexContainer vertexContainer, int id, /* QuadEmitter */ QuadCollectionBuilder quadEmitter, int spriteIndex) {
+		var toEmit = quadEmitter.getScratchQuad(quad); // quadEmitter.copyFrom(quad);
+		vertexContainer.lerpedVertices[id].writeToQuad(/* quadEmitter */ toEmit, (id + 1) % 4);
+		vertexContainer.vertex4.writeToQuad(/* quadEmitter */ toEmit, (id + 2) % 4);
 		int id3 = (id + 3) % 4;
-		vertexContainer.lerpedVertices[id3].writeToQuad(quadEmitter, id3);
-		tryInterpolate(quadEmitter, sprite, spriteIndex);
-		quadEmitter.emit();
+		vertexContainer.lerpedVertices[id3].writeToQuad(/* quadEmitter */ toEmit, id3);
+		tryInterpolate(/* quadEmitter */ toEmit, sprite, spriteIndex);
+		quadEmitter.emitQuad(); // quadEmitter.emit();
 	}
 
 	public static class Vertex {
@@ -506,38 +508,38 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 		public float y;
 		public float z;
 		public int color;
-		public int light;
+		// public int light;
 		public float u;
 		public float v;
-		public boolean hasNormal;
+		// public boolean hasNormal;
 		public float normalX;
 		public float normalY;
 		public float normalZ;
 
-		public void readFromQuad(QuadView quad, int vertexIndex) {
+		public void readFromQuad(/* QuadView */ MutableQuad quad, int vertexIndex) {
 			x = quad.x(vertexIndex);
 			y = quad.y(vertexIndex);
 			z = quad.z(vertexIndex);
 			color = quad.color(vertexIndex);
-			light = quad.lightmap(vertexIndex);
+			// light = quad.lightmap(vertexIndex);
 			u = quad.u(vertexIndex);
 			v = quad.v(vertexIndex);
-			hasNormal = quad.hasNormal(vertexIndex);
-			if (hasNormal) {
+			// hasNormal = quad.hasNormal(vertexIndex);
+			// if (hasNormal) {
 				normalX = quad.normalX(vertexIndex);
 				normalY = quad.normalY(vertexIndex);
 				normalZ = quad.normalZ(vertexIndex);
-			}
+			// }
 		}
 
-		public void writeToQuad(MutableQuadView quad, int vertexIndex) {
-			quad.pos(vertexIndex, x, y, z);
-			quad.color(vertexIndex, color);
-			quad.lightmap(vertexIndex, light);
-			quad.uv(vertexIndex, u, v);
-			if (hasNormal) {
-				quad.normal(vertexIndex, normalX, normalY, normalZ);
-			}
+		public void writeToQuad(/* MutableQuadView */ MutableQuad quad, int vertexIndex) {
+			quad.setPosition(vertexIndex, x, y, z); // quad.pos(vertexIndex, x, y, z);
+			quad.setColor(vertexIndex, color); // quad.color(vertexIndex, color);
+			// quad.lightmap(vertexIndex, light);
+			quad.setUv(vertexIndex, u, v); // quad.uv(vertexIndex, u, v);
+			// if (hasNormal) {
+				quad.setNormal(vertexIndex, normalX, normalY, normalZ); // quad.normal(vertexIndex, normalX, normalY, normalZ);
+			// }
 		}
 
 		public void set(Vertex other) {
@@ -545,15 +547,15 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 			y = other.y;
 			z = other.z;
 			color = other.color;
-			light = other.light;
+			// light = other.light;
 			u = other.u;
 			v = other.v;
-			hasNormal = other.hasNormal;
-			if (hasNormal) {
+			// hasNormal = other.hasNormal;
+			// if (hasNormal) {
 				normalX = other.normalX;
 				normalY = other.normalY;
 				normalZ = other.normalZ;
-			}
+			// }
 		}
 
 		public void setLerped(float delta, Vertex vertexA, Vertex vertexB) {
@@ -561,10 +563,10 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 			y = Mth.lerp(delta, vertexA.y, vertexB.y);
 			z = Mth.lerp(delta, vertexA.z, vertexB.z);
 			color = MathUtil.lerpColor(delta, vertexA.color, vertexB.color);
-			light = MathUtil.lerpLight(delta, vertexA.light, vertexB.light);
+			// light = MathUtil.lerpLight(delta, vertexA.light, vertexB.light);
 			u = Mth.lerp(delta, vertexA.u, vertexB.u);
 			v = Mth.lerp(delta, vertexA.v, vertexB.v);
-			if (vertexA.hasNormal && vertexB.hasNormal) {
+			// if (vertexA.hasNormal && vertexB.hasNormal) {
 				normalX = Mth.lerp(delta, vertexA.normalX, vertexB.normalX);
 				normalY = Mth.lerp(delta, vertexA.normalY, vertexB.normalY);
 				normalZ = Mth.lerp(delta, vertexA.normalZ, vertexB.normalZ);
@@ -575,7 +577,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 					normalY *= scale;
 					normalZ *= scale;
 				}
-			}
+			// }
 		}
 	}
 
@@ -594,7 +596,7 @@ public class CompactCtmQuadProcessor extends AbstractQuadProcessor {
 				vertex01, vertex12, vertex23, vertex30
 		};
 
-		public void fillBaseVertices(QuadView quad) {
+		public void fillBaseVertices(/* QuadView */ MutableQuad quad) {
 			vertex0.readFromQuad(quad, 0);
 			vertex1.readFromQuad(quad, 1);
 			vertex2.readFromQuad(quad, 2);

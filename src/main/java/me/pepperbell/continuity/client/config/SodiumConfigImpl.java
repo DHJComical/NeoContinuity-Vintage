@@ -14,7 +14,7 @@ public class SodiumConfigImpl implements ConfigEntryPoint {
 		ContinuityConfig config = ContinuityConfig.INSTANCE;
 
 		builder.registerOwnModOptions()
-				.setNonTintedIcon(ContinuityClient.asId("icon.png"))
+				.setNonTintedIcon(ContinuityClient.asId(/* "icon.png" */ "neo_continuity_icon.png"))
 				.addPage(builder.createOptionPage()
 						.setName(Component.translatable(ContinuityConfigScreen.getTranslationKey("title")))
 						.addOption(asSodiumOption(builder, config, config.connectedTextures)
