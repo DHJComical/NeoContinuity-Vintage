@@ -73,7 +73,7 @@ public class EmissiveBlockStateModel extends /* WrapperBlockStateModel */ Delega
 		super.collectParts(level, pos, state, random, quadTransform.scratchRawParts);
 
 		QuadCollectionBuilder emitter = quadTransform.extraQuadEmitter;
-		QuadCollectionBuilder scratch = quadTransform.scratchBuilder;
+		QuadCollectionBuilder scratch = quadTransform.scratchEmitter;
 
 		for (BlockStateModelPart part : quadTransform.scratchRawParts) {
 			emitter.reset();
@@ -144,7 +144,7 @@ public class EmissiveBlockStateModel extends /* WrapperBlockStateModel */ Delega
 		protected BlockState state;
 		// protected Predicate<@Nullable Direction> cullTest;
 		protected final ObjectArrayList<BlockStateModelPart> scratchRawParts = new ObjectArrayList<>();
-		protected final QuadCollectionBuilder scratchBuilder = new QuadCollectionBuilder();
+		protected final QuadCollectionBuilder scratchEmitter = new QuadCollectionBuilder();
 
 		protected boolean active;
 

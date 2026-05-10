@@ -87,7 +87,7 @@ public class CtmBlockStateModel extends /* WrapperBlockStateModel */ DelegateBlo
 		super.collectParts(level, pos, state, random, quadTransform.scratchRawParts);
 
 		QuadCollectionBuilder emitter = quadTransform.processingContext.getExtraQuadEmitter();
-		QuadCollectionBuilder scratch = quadTransform.scratchBuilder;
+		QuadCollectionBuilder scratch = quadTransform.scratchEmitter;
 
 		for (BlockStateModelPart part : quadTransform.scratchRawParts) {
 			emitter.reset();
@@ -164,10 +164,6 @@ public class CtmBlockStateModel extends /* WrapperBlockStateModel */ DelegateBlo
 		return QuadProcessors.getCache(state);
 	}
 
-	private boolean shouldRenderFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction direction) {
-		return Block.shouldRenderFace(level, pos, state, level.getBlockState(pos.offset(direction.getUnitVec3i())), direction);
-	}
-
 	protected static class CtmQuadTransform /* implements QuadTransform */ {
 		protected final ProcessingContextImpl processingContext = new ProcessingContextImpl();
 		protected final RandomSource random = RandomSource.createThreadLocalInstance();
@@ -180,7 +176,7 @@ public class CtmBlockStateModel extends /* WrapperBlockStateModel */ DelegateBlo
 		// protected Predicate<@Nullable Direction> cullTest;
 		protected Function<TextureAtlasSprite, QuadProcessors.Slice> sliceFunc;
 		protected final ObjectArrayList<BlockStateModelPart> scratchRawParts = new ObjectArrayList<>();
-		protected final QuadCollectionBuilder scratchBuilder = new QuadCollectionBuilder();
+		protected final QuadCollectionBuilder scratchEmitter = new QuadCollectionBuilder();
 
 		protected boolean active;
 
@@ -238,7 +234,7 @@ public class CtmBlockStateModel extends /* WrapperBlockStateModel */ DelegateBlo
 			this.sliceFunc = sliceFunc;
 
 			this.scratchRawParts.clear();
-			this.scratchBuilder.reset();
+			this.scratchEmitter.reset();
 
 			active = true;
 		}
