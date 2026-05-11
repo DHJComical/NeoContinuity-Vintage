@@ -26,7 +26,7 @@ public class CtmResourceReloader implements PreparableReloadListener {
 	public void prepareSharedState(SharedState currentReload) {
 		currentReload.set(BLOCK_ATLAS_EXTRA_IDS_FUTURE_KEY, new CompletableFuture<>());
 		// currentReload.set(ModelWrappingHandler.WRAP_CTM_FUTURE_KEY, new CompletableFuture<>());
-		ModelWrappingHandler.WRAP_EMISSIVE_FUTURE_KEY = new CompletableFuture<>();
+		ModelWrappingHandler.WRAP_CTM_FUTURE_KEY = new CompletableFuture<>();
 	}
 
 	@Override

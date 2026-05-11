@@ -57,6 +57,10 @@ public class QuadCollectionBuilder {
 	}
 
 	private void addAll(int direction, int count, BakedQuad[] quads) {
+		if (count == 0) {
+			return;
+		}
+
 		int required = cursors[direction] + count;
 
 		if (required > size) {
@@ -68,21 +72,26 @@ public class QuadCollectionBuilder {
 	}
 
 	public void addAll(QuadCollectionBuilder quadCollectionBuilder) {
-		for (var i = 0; i < 7; i ++) {
+		for (int i = 0; i < 7; i ++) {
 			addAll(i, quadCollectionBuilder.cursors[i], quadCollectionBuilder.all[i]);
 		}
 	}
 
 	public QuadCollection build() {
-		var downCount = cursors[0];
-		var upCount = cursors[1];
-		var northCount = cursors[2];
-		var southCount = cursors[3];
-		var westCount = cursors[4];
-		var eastCount = cursors[5];
-		var unculledCount = cursors[6];
+		int downCount = cursors[0];
+		int upCount = cursors[1];
+		int northCount = cursors[2];
+		int southCount = cursors[3];
+		int westCount = cursors[4];
+		int eastCount = cursors[5];
+		int unculledCount = cursors[6];
+		int allCount = downCount + upCount + northCount + southCount + westCount + eastCount + unculledCount;
 
-		BakedQuad[] allQuads = new BakedQuad[downCount + upCount + northCount + southCount + westCount + eastCount + unculledCount];
+		if (allCount == 0) {
+			return QuadCollection.EMPTY;
+		}
+
+		BakedQuad[] allQuads = new BakedQuad[allCount];
 		List<BakedQuad> allList = Arrays.asList(allQuads);
 
 		int offset = 0;
@@ -131,6 +140,10 @@ public class QuadCollectionBuilder {
 	}
 
 	public void reset() {
+		for (int i = 0; i < 7; i ++) {
+			Arrays.fill(all[i], 0, cursors[i], null);
+		}
+
 		Arrays.fill(cursors, 0);
 	}
 
