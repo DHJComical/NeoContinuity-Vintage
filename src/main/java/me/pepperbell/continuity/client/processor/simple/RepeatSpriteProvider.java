@@ -1,19 +1,17 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RepeatCtmProperties;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class RepeatSpriteProvider implements SpriteProvider {
 	protected TextureAtlasSprite[] sprites;
@@ -32,8 +30,12 @@ public class RepeatSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
-		Direction face = symmetry.apply(/* quad.lightFace() */ quad.direction());
+	public TextureAtlasSprite getSprite(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, ProcessingDataProvider dataProvider) {
+		EnumFacing face = quad.getFace();
+		if (face == null) {
+			face = EnumFacing.DOWN;
+		}
+		face = symmetry.apply(face);
 
 		int x = pos.getX();
 		int y = pos.getY();
@@ -43,10 +45,6 @@ public class RepeatSpriteProvider implements SpriteProvider {
 		int spriteY;
 		switch (face) {
 			case DOWN -> {
-				// MCPatcher uses a different formula for the down face.
-				// It is not used here to maintain Optifine parity.
-				// spriteX = -x;
-				// spriteY = -z;
 				spriteX = x;
 				spriteY = -z - 1;
 			}

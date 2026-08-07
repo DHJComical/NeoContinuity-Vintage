@@ -2,7 +2,7 @@ package me.pepperbell.continuity.impl.client;
 
 import java.util.Map;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.pepperbell.continuity.api.client.CtmLoader;

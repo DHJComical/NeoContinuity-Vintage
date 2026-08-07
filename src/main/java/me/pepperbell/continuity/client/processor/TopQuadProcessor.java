@@ -3,15 +3,13 @@ package me.pepperbell.continuity.client.processor;
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.processor.simple.SimpleQuadProcessor;
 import me.pepperbell.continuity.client.properties.ConnectingCtmProperties;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class TopQuadProcessor extends AbstractQuadProcessor {
 	protected ConnectionPredicate connectionPredicate;
@@ -24,22 +22,41 @@ public class TopQuadProcessor extends AbstractQuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuadInner(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
-		Direction lightFace = /* quad.lightFace() */ quad.direction();
-		Direction.Axis axis;
-		if (appearanceState.hasProperty(BlockStateProperties.AXIS)) {
-			axis = appearanceState.getValue(BlockStateProperties.AXIS);
-		} else {
-			axis = Direction.Axis.Y;
+	public ProcessingResult processQuadInner(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, int pass, ProcessingContext context) {
+		EnumFacing lightFace = quad.getFace();
+		if (lightFace == null) {
+			return ProcessingResult.NEXT_PROCESSOR;
 		}
+
+		EnumFacing.Axis axis = EnumFacing.Axis.Y;
+		for (IProperty<?> property : appearanceState.getProperties().keySet()) {
+			if (property.getName().equals("axis")) {
+				Object value = appearanceState.getValue(property);
+				if (value instanceof EnumFacing.Axis axisValue) {
+					axis = axisValue;
+				}
+				break;
+			}
+		}
+
 		if (lightFace.getAxis() != axis) {
-			Direction up = Direction.fromAxisAndDirection(axis, Direction.AxisDirection.POSITIVE);
-			BlockPos.MutableBlockPos mutablePos = context.getData(ProcessingDataKeys.MUTABLE_POS).setWithOffset(pos, up);
+			EnumFacing up = fromAxisAndDirection(axis, EnumFacing.AxisDirection.POSITIVE);
+			BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+			mutablePos.setPos(pos).move(up);
 			if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, lightFace, sprite, innerSeams)) {
-				return SimpleQuadProcessor.process(quad, sprite, sprites[0]);
+				return SimpleQuadProcessor.process(quad, sprite, sprites[0], context);
 			}
 		}
 		return ProcessingResult.NEXT_PROCESSOR;
+	}
+
+	private static EnumFacing fromAxisAndDirection(EnumFacing.Axis axis, EnumFacing.AxisDirection direction) {
+		boolean positive = direction == EnumFacing.AxisDirection.POSITIVE;
+		return switch (axis) {
+			case X -> positive ? EnumFacing.EAST : EnumFacing.WEST;
+			case Y -> positive ? EnumFacing.UP : EnumFacing.DOWN;
+			case Z -> positive ? EnumFacing.SOUTH : EnumFacing.NORTH;
+		};
 	}
 
 	public static class Factory extends AbstractQuadProcessorFactory<ConnectingCtmProperties> {

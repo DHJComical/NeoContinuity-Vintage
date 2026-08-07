@@ -2,39 +2,42 @@ package me.pepperbell.continuity.client.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
+import java.io.FileNotFoundException;
 import java.util.Properties;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.client.resources.IResource;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
 
 public final class EmissiveSuffixLoader {
-	public static final Identifier LOCATION = Identifier.withDefaultNamespace("optifine/emissive.properties");
+	public static final ResourceLocation LOCATION = new ResourceLocation("minecraft", "optifine/emissive.properties");
 
 	private static String emissiveSuffix;
+
+	private EmissiveSuffixLoader() {
+	}
 
 	@Nullable
 	public static String getEmissiveSuffix() {
 		return emissiveSuffix;
 	}
 
-	public static void load(ResourceManager manager) {
+	public static void load(IResourceManager manager) {
 		emissiveSuffix = null;
-
-		Optional<Resource> optionalResource = manager.getResource(LOCATION);
-		if (optionalResource.isPresent()) {
-			Resource resource = optionalResource.get();
-			try (InputStream inputStream = resource.open()) {
+		try {
+			IResource resource = manager.getResource(LOCATION);
+			try (InputStream inputStream = resource.getInputStream()) {
 				Properties properties = new Properties();
 				properties.load(inputStream);
 				emissiveSuffix = properties.getProperty("suffix.emissive");
-			} catch (IOException e) {
-				ContinuityClient.LOGGER.error("Failed to load emissive suffix from file '" + LOCATION + "'", e);
 			}
+		} catch (FileNotFoundException e) {
+			// Optional OptiFine file.
+		} catch (IOException e) {
+			ContinuityClient.LOGGER.error("Failed to load emissive suffix from file '" + LOCATION + "'", e);
 		}
 	}
 }

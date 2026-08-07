@@ -9,18 +9,21 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.pepperbell.continuity.api.client.CachingPredicates;
 import me.pepperbell.continuity.api.client.QuadProcessor;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.world.level.block.state.BlockState;
 
 public final class QuadProcessors {
 	private static ProcessorHolder[] processorHolders = new ProcessorHolder[0];
 	private static final BlockStateKeyCache CACHE = new BlockStateKeyCache();
 
-	public static /* Function<TextureAtlasSprite, Slice> */ SpriteKeyCache getCache(BlockState state) {
+	private QuadProcessors() {
+	}
+
+	public static SpriteKeyCache getCache(IBlockState state) {
 		return CACHE.apply(state);
 	}
 
-	private static Slice computeSlice(BlockState state, TextureAtlasSprite sprite) {
+	private static Slice computeSlice(IBlockState state, TextureAtlasSprite sprite) {
 		List<QuadProcessor> processorList = new ObjectArrayList<>();
 		List<QuadProcessor> multipassProcessorList = new ObjectArrayList<>();
 
@@ -41,13 +44,13 @@ public final class QuadProcessors {
 			}
 		}
 
-		QuadProcessor[] processors = processorList.toArray(QuadProcessor[]::new);
-		QuadProcessor[] multipassProcessors = multipassProcessorList.toArray(QuadProcessor[]::new);
+		QuadProcessor[] processors = processorList.toArray(new QuadProcessor[0]);
+		QuadProcessor[] multipassProcessors = multipassProcessorList.toArray(new QuadProcessor[0]);
 		return new Slice(processors, multipassProcessors);
 	}
 
 	public static void reload(List<QuadProcessors.ProcessorHolder> processorHolders) {
-		QuadProcessors.processorHolders = processorHolders.toArray(ProcessorHolder[]::new);
+		QuadProcessors.processorHolders = processorHolders.toArray(new ProcessorHolder[0]);
 		CACHE.clear();
 	}
 
@@ -58,24 +61,21 @@ public final class QuadProcessors {
 	}
 
 	private static class BlockStateKeyCache {
-		private final Reference2ReferenceOpenHashMap<BlockState, SpriteKeyCache> map = new Reference2ReferenceOpenHashMap<>();
+		private final Reference2ReferenceOpenHashMap<IBlockState, SpriteKeyCache> map = new Reference2ReferenceOpenHashMap<>();
 		private final StampedLock lock = new StampedLock();
 
-		public SpriteKeyCache apply(BlockState state) {
+		public SpriteKeyCache apply(IBlockState state) {
 			SpriteKeyCache innerCache;
 
 			long optimisticReadStamp = lock.tryOptimisticRead();
 			if (optimisticReadStamp != 0L) {
 				try {
-					// This map read could happen at the same time as a map write, so catch any exceptions.
-					// This is safe due to the map implementation used, which is guaranteed to not mutate the map during
-					// a read.
 					innerCache = map.get(state);
 					if (innerCache != null && lock.validate(optimisticReadStamp)) {
 						return innerCache;
 					}
 				} catch (Exception e) {
-					//
+					// fast path read can race with a write
 				}
 			}
 
@@ -112,12 +112,12 @@ public final class QuadProcessors {
 		}
 	}
 
-	/* private */ public static class SpriteKeyCache implements Function<TextureAtlasSprite, Slice> {
-		/* private */ public final Reference2ReferenceOpenHashMap<TextureAtlasSprite, Slice> map = new Reference2ReferenceOpenHashMap<>(4, Hash.FAST_LOAD_FACTOR);
+	public static class SpriteKeyCache implements Function<TextureAtlasSprite, Slice> {
+		public final Reference2ReferenceOpenHashMap<TextureAtlasSprite, Slice> map = new Reference2ReferenceOpenHashMap<>(4, Hash.FAST_LOAD_FACTOR);
 		private final StampedLock lock = new StampedLock();
-		private final BlockState state;
+		private final IBlockState state;
 
-		public SpriteKeyCache(BlockState state) {
+		public SpriteKeyCache(IBlockState state) {
 			this.state = state;
 		}
 
@@ -128,15 +128,12 @@ public final class QuadProcessors {
 			long optimisticReadStamp = lock.tryOptimisticRead();
 			if (optimisticReadStamp != 0L) {
 				try {
-					// This map read could happen at the same time as a map write, so catch any exceptions.
-					// This is safe due to the map implementation used, which is guaranteed to not mutate the map during
-					// a read.
 					slice = map.get(sprite);
 					if (slice != null && lock.validate(optimisticReadStamp)) {
 						return slice;
 					}
 				} catch (Exception e) {
-					//
+					// fast path read can race with a write
 				}
 			}
 

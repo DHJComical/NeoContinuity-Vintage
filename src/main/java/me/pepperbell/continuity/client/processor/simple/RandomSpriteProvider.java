@@ -1,7 +1,6 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
@@ -9,14 +8,13 @@ import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RandomCtmProperties;
 import me.pepperbell.continuity.client.util.MathUtil;
 import me.pepperbell.continuity.client.util.RandomIndexProvider;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class RandomSpriteProvider implements SpriteProvider {
 	protected TextureAtlasSprite[] sprites;
@@ -35,8 +33,11 @@ public class RandomSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
-		Direction face = /* quad.lightFace() */ quad.direction();
+	public TextureAtlasSprite getSprite(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, ProcessingDataProvider dataProvider) {
+		EnumFacing face = quad.getFace();
+		if (face == null) {
+			face = EnumFacing.DOWN;
+		}
 
 		int x = pos.getX();
 		int y = pos.getY();
@@ -44,13 +45,13 @@ public class RandomSpriteProvider implements SpriteProvider {
 
 		if (linked) {
 			Block block = appearanceState.getBlock();
-			BlockPos.MutableBlockPos mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS).set(pos);
+			BlockPos.MutableBlockPos mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS).setPos(pos);
 
 			int i = 0;
 			do {
 				mutablePos.setY(mutablePos.getY() - 1);
 				i++;
-			} while (i < 3 && block == level.getBlockState(mutablePos).getAppearance(level, mutablePos, face, state, pos).getBlock());
+			} while (i < 3 && block == level.getBlockState(mutablePos).getBlock());
 			y = mutablePos.getY() + 1;
 		}
 

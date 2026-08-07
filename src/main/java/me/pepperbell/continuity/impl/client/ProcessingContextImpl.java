@@ -2,28 +2,21 @@ package me.pepperbell.continuity.impl.client;
 
 import java.util.List;
 
-// import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableMeshImpl;
-import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
-import net.minecraft.client.resources.model.geometry.QuadCollection;
-import org.jetbrains.annotations.Nullable;
-
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.pepperbell.continuity.api.client.ProcessingDataKey;
 import me.pepperbell.continuity.api.client.ProcessingDataKeyRegistry;
 import me.pepperbell.continuity.api.client.QuadProcessor;
-// import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 
 public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
-	// protected final MutableMesh mutableMesh = Renderer.get().mutableMesh();
-	protected QuadCollectionBuilder mutableMesh = new QuadCollectionBuilder();
+	protected final List<BakedQuad> extraQuads = new ObjectArrayList<>();
 	protected final Object[] processingData = new Object[ProcessingDataKeyRegistry.get().getRegisteredAmount()];
 
 	@Override
-	public QuadCollectionBuilder getExtraQuadEmitter() {
-		return mutableMesh /* .emitter() */;
-
+	public List<BakedQuad> getExtraQuads() {
+		return extraQuads;
 	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getData(ProcessingDataKey<T> key) {
@@ -36,27 +29,11 @@ public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
 		return data;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Nullable
-	public <T> T getDataOrNull(ProcessingDataKey<T> key) {
-		return (T) processingData[key.getRawId()];
-	}
-
-	/* public void outputTo(QuadEmitter emitter) {
-		mutableMesh.outputTo(emitter);
-	} */
-
 	public void reset() {
-		// mutableMesh.clear();
-		mutableMesh.reset();
-		resetData();
-	}
-
-	protected void resetData() {
+		extraQuads.clear();
 		List<ProcessingDataKey<?>> allResettable = ProcessingDataKeyRegistryImpl.INSTANCE.getAllResettable();
-		int amount = allResettable.size();
-		for (int i = 0; i < amount; i++) {
-			resetData(allResettable.get(i));
+		for (ProcessingDataKey<?> key : allResettable) {
+			resetData(key);
 		}
 	}
 
@@ -65,5 +42,11 @@ public class ProcessingContextImpl implements QuadProcessor.ProcessingContext {
 		if (value != null) {
 			key.getValueResetAction().accept(value);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@javax.annotation.Nullable
+	protected <T> T getDataOrNull(ProcessingDataKey<T> key) {
+		return (T) processingData[key.getRawId()];
 	}
 }

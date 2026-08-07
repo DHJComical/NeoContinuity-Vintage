@@ -3,19 +3,19 @@ package me.pepperbell.continuity.client.properties;
 import java.util.Properties;
 
 import me.pepperbell.continuity.client.processor.OrientationMode;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraft.util.ResourceLocation;
 
 public class OrientedConnectingCtmProperties extends ConnectingCtmProperties {
 	protected OrientationMode orientationMode;
 
-	public OrientedConnectingCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method, OrientationMode defaultOrientationMode) {
+	public OrientedConnectingCtmProperties(Properties properties, ResourceLocation resourceId, IResourcePack pack, int packPriority, IResourceManager resourceManager, String method, OrientationMode defaultOrientationMode) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 		orientationMode = defaultOrientationMode;
 	}
 
-	public OrientedConnectingCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
+	public OrientedConnectingCtmProperties(Properties properties, ResourceLocation resourceId, IResourcePack pack, int packPriority, IResourceManager resourceManager, String method) {
 		this(properties, resourceId, pack, packPriority, resourceManager, method, OrientationMode.TEXTURE);
 	}
 

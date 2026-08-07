@@ -1,9 +1,6 @@
 {
   "pack": {
-    "min_format": 84,
-    "max_format": 999,
-    "description": {
-      "translate": "resourcePack.continuity.default.description"
-    }
+    "pack_format": 3,
+    "description": "Continuity Default Connected Textures"
   }
 }

@@ -6,19 +6,18 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.pepperbell.continuity.api.client.ProcessingDataKey;
 import me.pepperbell.continuity.api.client.ProcessingDataKeyRegistry;
-// import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.util.ResourceLocation;
 
 public final class ProcessingDataKeyRegistryImpl implements ProcessingDataKeyRegistry {
 	public static final ProcessingDataKeyRegistryImpl INSTANCE = new ProcessingDataKeyRegistryImpl();
 
-	private final Map<Identifier, ProcessingDataKey<?>> keyMap = new Object2ObjectOpenHashMap<>();
+	private final Map<ResourceLocation, ProcessingDataKey<?>> keyMap = new Object2ObjectOpenHashMap<>();
 	private final List<ProcessingDataKey<?>> allResettable = new ObjectArrayList<>();
 	private final List<ProcessingDataKey<?>> allResettableView = Collections.unmodifiableList(allResettable);
 
@@ -26,7 +25,7 @@ public final class ProcessingDataKeyRegistryImpl implements ProcessingDataKeyReg
 	private boolean frozen;
 
 	@Override
-	public <T> ProcessingDataKey<T> registerKey(Identifier id, Supplier<T> valueSupplier, Consumer<T> valueResetAction) {
+	public <T> ProcessingDataKey<T> registerKey(ResourceLocation id, Supplier<T> valueSupplier, Consumer<T> valueResetAction) {
 		if (frozen) {
 			throw new IllegalArgumentException("Cannot register processing data key for ID '" + id + "' to frozen registry");
 		}
@@ -45,7 +44,7 @@ public final class ProcessingDataKeyRegistryImpl implements ProcessingDataKeyReg
 
 	@Override
 	@Nullable
-	public ProcessingDataKey<?> getKey(Identifier id) {
+	public ProcessingDataKey<?> getKey(ResourceLocation id) {
 		return keyMap.get(id);
 	}
 
@@ -55,7 +54,6 @@ public final class ProcessingDataKeyRegistryImpl implements ProcessingDataKeyReg
 	}
 
 	public void init() {
-		// ClientLifecycleEvents.CLIENT_STARTED.register(client -> frozen = true);
 	}
 
 	public void setFrozen() {

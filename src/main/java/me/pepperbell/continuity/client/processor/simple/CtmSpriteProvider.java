@@ -1,7 +1,6 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.processor.ConnectionPredicate;
@@ -9,19 +8,14 @@ import me.pepperbell.continuity.client.processor.DirectionMaps;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.properties.OrientedConnectingCtmProperties;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class CtmSpriteProvider implements SpriteProvider {
-	// Indices for this array are formed from these bit values:
-	// 128 64  32
-	// 1   *   16
-	// 2   4   8
 	public static final int[] SPRITE_INDEX_MAP = new int[] {
 			0, 3, 0, 3, 12, 5, 12, 15, 0, 3, 0, 3, 12, 5, 12, 15,
 			1, 2, 1, 2, 4, 7, 4, 29, 1, 2, 1, 2, 13, 31, 13, 14,
@@ -55,17 +49,17 @@ public class CtmSpriteProvider implements SpriteProvider {
 
 	@Override
 	@Nullable
-	public TextureAtlasSprite getSprite(/* QuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, ProcessingDataProvider dataProvider) {
-		Direction[] directions = DirectionMaps.getDirections(orientationMode, quad, appearanceState);
+	public TextureAtlasSprite getSprite(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, ProcessingDataProvider dataProvider) {
+		EnumFacing[] directions = DirectionMaps.getDirections(orientationMode, quad, appearanceState);
 		BlockPos.MutableBlockPos mutablePos = dataProvider.getData(ProcessingDataKeys.MUTABLE_POS);
-		int connections = getConnections(directions, connectionPredicate, innerSeams, mutablePos, level, pos, appearanceState, state, /* quad.lightFace() */ quad.direction(), sprite);
+		int connections = getConnections(directions, connectionPredicate, innerSeams, mutablePos, level, pos, appearanceState, state, quad.getFace(), sprite);
 		return sprites[SPRITE_INDEX_MAP[connections]];
 	}
 
-	public static int getConnections(Direction[] directions, ConnectionPredicate connectionPredicate, boolean innerSeams, BlockPos.MutableBlockPos mutablePos, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, Direction face, TextureAtlasSprite quadSprite) {
+	public static int getConnections(EnumFacing[] directions, ConnectionPredicate connectionPredicate, boolean innerSeams, BlockPos.MutableBlockPos mutablePos, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, EnumFacing face, TextureAtlasSprite quadSprite) {
 		int connections = 0;
 		for (int i = 0; i < 4; i++) {
-			mutablePos.setWithOffset(pos, directions[i]);
+			mutablePos.setPos(pos).move(directions[i]);
 			if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
 				connections |= 1 << (i * 2);
 			}
@@ -74,7 +68,7 @@ public class CtmSpriteProvider implements SpriteProvider {
 			int index1 = i;
 			int index2 = (i + 1) % 4;
 			if (((connections >>> index1 * 2) & 1) == 1 && ((connections >>> index2 * 2) & 1) == 1) {
-				mutablePos.setWithOffset(pos, directions[index1]).move(directions[index2]);
+				mutablePos.setPos(pos).move(directions[index1]).move(directions[index2]);
 				if (connectionPredicate.shouldConnect(level, pos, appearanceState, state, mutablePos, face, quadSprite, innerSeams)) {
 					connections |= 1 << (i * 2 + 1);
 				}

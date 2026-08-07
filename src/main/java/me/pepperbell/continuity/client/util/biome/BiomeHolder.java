@@ -2,23 +2,23 @@ package me.pepperbell.continuity.client.util.biome;
 
 import java.util.Map;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.client.ContinuityClient;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.RegistryNamespaced;
+import net.minecraft.world.biome.Biome;
 
 public final class BiomeHolder {
-	private final Identifier id;
+	private final ResourceLocation id;
 	@Nullable
 	private Biome biome;
 
-	BiomeHolder(Identifier id) {
+	BiomeHolder(ResourceLocation id) {
 		this.id = id;
 	}
 
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return id;
 	}
 
@@ -27,13 +27,13 @@ public final class BiomeHolder {
 		return biome;
 	}
 
-	void refresh(Registry<Biome> biomeRegistry, Map<Identifier, Identifier> compactIdMap) {
-		Identifier id = compactIdMap.get(this.id);
+	void refresh(RegistryNamespaced<ResourceLocation, Biome> biomeRegistry, Map<ResourceLocation, ResourceLocation> compactIdMap) {
+		ResourceLocation id = compactIdMap.get(this.id);
 		if (id == null) {
 			id = this.id;
 		}
 		if (biomeRegistry.containsKey(id)) {
-			biome = biomeRegistry.getValue(id);
+			biome = biomeRegistry.getObject(id);
 		} else {
 			ContinuityClient.LOGGER.warn("Unknown biome '" + this.id + "'");
 		}
@@ -41,8 +41,12 @@ public final class BiomeHolder {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 		BiomeHolder that = (BiomeHolder) o;
 		return id.equals(that.id);
 	}

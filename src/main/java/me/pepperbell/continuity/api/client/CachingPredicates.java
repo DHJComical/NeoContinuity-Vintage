@@ -2,9 +2,9 @@ package me.pepperbell.continuity.api.client;
 
 import java.util.function.Function;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.ResourceLocation;
 
 public interface CachingPredicates {
 	boolean affectsSprites();
@@ -13,11 +13,11 @@ public interface CachingPredicates {
 
 	boolean affectsBlockStates();
 
-	boolean affectsBlockState(BlockState state);
+	boolean affectsBlockState(IBlockState state);
 
 	boolean isValidForMultipass();
 
 	interface Factory<T extends CtmProperties> {
-		CachingPredicates createPredicates(T properties, Function<Identifier, TextureAtlasSprite> spriteGetter);
+		CachingPredicates createPredicates(T properties, Function<ResourceLocation, TextureAtlasSprite> spriteGetter);
 	}
 }

@@ -1,58 +1,73 @@
 package me.pepperbell.continuity.client.processor;
 
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.apache.commons.lang3.ArrayUtils;
 
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.EnumFacing;
 
 public final class DirectionMaps {
-	public static final Direction[][][] DIRECTION_MAPS = new Direction[6][8][];
+	public static final EnumFacing[][][] DIRECTION_MAPS = new EnumFacing[6][8][];
+
 	static {
-		for (Direction face : Direction.values()) {
-			Direction textureUp;
-			if (face == Direction.UP) {
-				textureUp = Direction.NORTH;
-			} else if (face == Direction.DOWN) {
-				textureUp = Direction.SOUTH;
+		for (EnumFacing face : EnumFacing.values()) {
+			EnumFacing textureUp;
+			if (face == EnumFacing.UP) {
+				textureUp = EnumFacing.NORTH;
+			} else if (face == EnumFacing.DOWN) {
+				textureUp = EnumFacing.SOUTH;
 			} else {
-				textureUp = Direction.UP;
+				textureUp = EnumFacing.UP;
 			}
 
-			Direction textureLeft;
-			if (face.getAxisDirection() == Direction.AxisDirection.NEGATIVE) {
-				textureLeft = textureUp.getClockWise(face.getAxis());
+			EnumFacing textureLeft;
+			if (face.getAxisDirection() == EnumFacing.AxisDirection.NEGATIVE) {
+				textureLeft = rotateClockwise(textureUp, face.getAxis());
 			} else {
-				textureLeft = textureUp.getCounterClockWise(face.getAxis());
+				textureLeft = rotateCounterClockwise(textureUp, face.getAxis());
 			}
 
-			Direction[][] map = DIRECTION_MAPS[face.ordinal()];
+			EnumFacing[][] map = DIRECTION_MAPS[face.ordinal()];
 
-			map[0] = new Direction[] { textureLeft, textureUp.getOpposite(), textureLeft.getOpposite(), textureUp }; // l d r u
-			map[1] = map[0].clone(); // d r u l
+			map[0] = new EnumFacing[] { textureLeft, textureUp.getOpposite(), textureLeft.getOpposite(), textureUp };
+			map[1] = map[0].clone();
 			ArrayUtils.shift(map[1], -1);
-			map[2] = map[1].clone(); // r u l d
+			map[2] = map[1].clone();
 			ArrayUtils.shift(map[2], -1);
-			map[3] = map[2].clone(); // u l d r
+			map[3] = map[2].clone();
 			ArrayUtils.shift(map[3], -1);
 
-			map[4] = map[0].clone(); // r d l u
+			map[4] = map[0].clone();
 			ArrayUtils.swap(map[4], 0, 2);
-			map[5] = map[1].clone(); // u r d l
+			map[5] = map[1].clone();
 			ArrayUtils.swap(map[5], 0, 2);
-			map[6] = map[2].clone(); // l u r d
+			map[6] = map[2].clone();
 			ArrayUtils.swap(map[6], 0, 2);
-			map[7] = map[3].clone(); // d l u r
+			map[7] = map[3].clone();
 			ArrayUtils.swap(map[7], 0, 2);
 		}
 	}
 
-	public static Direction[][] getMap(Direction direction) {
+	private DirectionMaps() {
+	}
+
+	private static EnumFacing rotateClockwise(EnumFacing face, EnumFacing.Axis axis) {
+		return face.rotateAround(axis);
+	}
+
+	private static EnumFacing rotateCounterClockwise(EnumFacing face, EnumFacing.Axis axis) {
+		return face.rotateAround(axis).rotateAround(axis).rotateAround(axis);
+	}
+
+	public static EnumFacing[][] getMap(EnumFacing direction) {
 		return DIRECTION_MAPS[direction.ordinal()];
 	}
 
-	public static Direction[] getDirections(OrientationMode orientationMode, /* QuadView */ MutableQuad quad, BlockState state) {
-		return getMap(/* quad.lightFace() */ quad.direction())[orientationMode.getOrientation(quad, state)];
+	public static EnumFacing[] getDirections(OrientationMode orientationMode, BakedQuad quad, IBlockState state) {
+		EnumFacing face = quad.getFace();
+		if (face == null) {
+			face = EnumFacing.DOWN;
+		}
+		return getMap(face)[orientationMode.getOrientation(quad, state)];
 	}
 }

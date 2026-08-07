@@ -5,9 +5,9 @@ import java.util.Properties;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.OrientationMode;
 import me.pepperbell.continuity.client.processor.Symmetry;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraft.util.ResourceLocation;
 
 public class RepeatCtmProperties extends BaseCtmProperties {
 	protected int width;
@@ -15,7 +15,7 @@ public class RepeatCtmProperties extends BaseCtmProperties {
 	protected Symmetry symmetry = Symmetry.NONE;
 	protected OrientationMode orientationMode = OrientationMode.NONE;
 
-	public RepeatCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
+	public RepeatCtmProperties(Properties properties, ResourceLocation resourceId, IResourcePack pack, int packPriority, IResourceManager resourceManager, String method) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 	}
 
@@ -43,7 +43,7 @@ public class RepeatCtmProperties extends BaseCtmProperties {
 				return;
 			}
 		} catch (NumberFormatException e) {
-			//
+			// logged below
 		}
 		ContinuityClient.LOGGER.error("Invalid 'width' value '" + widthStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 		valid = false;
@@ -64,7 +64,7 @@ public class RepeatCtmProperties extends BaseCtmProperties {
 				return;
 			}
 		} catch (NumberFormatException e) {
-			//
+			// logged below
 		}
 		ContinuityClient.LOGGER.error("Invalid 'height' value '" + heightStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 		valid = false;

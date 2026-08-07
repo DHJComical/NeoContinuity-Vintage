@@ -7,9 +7,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.util.RandomIndexProvider;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraft.util.ResourceLocation;
 
 public class RandomCtmProperties extends BaseCtmProperties {
 	protected RandomIndexProvider.Factory indexProviderFactory = RandomIndexProvider.UnweightedFactory.INSTANCE;
@@ -17,7 +17,7 @@ public class RandomCtmProperties extends BaseCtmProperties {
 	protected Symmetry symmetry = Symmetry.NONE;
 	protected boolean linked = false;
 
-	public RandomCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
+	public RandomCtmProperties(Properties properties, ResourceLocation resourceId, IResourcePack pack, int packPriority, IResourceManager resourceManager, String method) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 	}
 
@@ -65,7 +65,7 @@ public class RandomCtmProperties extends BaseCtmProperties {
 						}
 					}
 				} catch (NumberFormatException e) {
-					//
+					// invalid weight, logged below
 				}
 				ContinuityClient.LOGGER.warn("Invalid 'weights' element '" + weightStr + "' at index '" + i + "' in file '" + resourceId + "' in pack '" + packId + "'");
 			}
@@ -89,7 +89,7 @@ public class RandomCtmProperties extends BaseCtmProperties {
 				return;
 			}
 		} catch (NumberFormatException e) {
-			//
+			// logged below
 		}
 		ContinuityClient.LOGGER.warn("Invalid 'randomLoops' value '" + randomLoopsStr + "' in file '" + resourceId + "' in pack '" + packId + "'");
 	}

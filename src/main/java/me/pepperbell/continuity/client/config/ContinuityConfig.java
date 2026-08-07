@@ -6,10 +6,10 @@ import java.io.FileWriter;
 import java.util.Collections;
 import java.util.Map;
 
-import net.neoforged.fml.loading.FMLPaths;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.annotation.Nullable;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,13 +21,14 @@ import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
-// import net.fabricmc.loader.api.FabricLoader;
+import net.minecraftforge.fml.common.Loader;
 
 public class ContinuityConfig {
-	protected static final Logger LOGGER = LoggerFactory.getLogger("Continuity Config");
+	protected static final Logger LOGGER = LogManager.getLogger("Continuity Config");
 	protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-	public static final ContinuityConfig INSTANCE = new ContinuityConfig(/* FabricLoader.getInstance().getConfigDir() */ FMLPaths.CONFIGDIR.get().resolve("continuity.json").toFile());
+	public static final ContinuityConfig INSTANCE = new ContinuityConfig(new File(Loader.instance().getConfigDir(), "continuity.json"));
+
 	static {
 		INSTANCE.load();
 	}

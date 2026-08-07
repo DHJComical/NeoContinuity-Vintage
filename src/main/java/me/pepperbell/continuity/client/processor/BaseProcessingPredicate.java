@@ -1,29 +1,28 @@
 package me.pepperbell.continuity.client.processor;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import me.pepperbell.continuity.client.mixinterface.BlockAndTintGetterExtension;
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.Nameable;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldNameable;
+import net.minecraft.world.biome.Biome;
 
 public class BaseProcessingPredicate implements ProcessingPredicate {
 	@Nullable
-	protected EnumSet<Direction> faces;
+	protected EnumSet<EnumFacing> faces;
 	@Nullable
 	protected Predicate<Biome> biomePredicate;
 	@Nullable
@@ -31,7 +30,7 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 	@Nullable
 	protected Predicate<String> blockEntityNamePredicate;
 
-	public BaseProcessingPredicate(@Nullable EnumSet<Direction> faces, @Nullable Predicate<Biome> biomePredicate, @Nullable IntPredicate heightPredicate, @Nullable Predicate<String> blockEntityNamePredicate) {
+	public BaseProcessingPredicate(@Nullable EnumSet<EnumFacing> faces, @Nullable Predicate<Biome> biomePredicate, @Nullable IntPredicate heightPredicate, @Nullable Predicate<String> blockEntityNamePredicate) {
 		this.faces = faces;
 		this.biomePredicate = biomePredicate;
 		this.heightPredicate = heightPredicate;
@@ -39,91 +38,63 @@ public class BaseProcessingPredicate implements ProcessingPredicate {
 	}
 
 	@Override
-	public boolean shouldProcessQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, ProcessingDataProvider dataProvider) {
-		if (heightPredicate != null) {
-			if (!heightPredicate.test(pos.getY())) {
+	public boolean shouldProcessQuad(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, ProcessingDataProvider dataProvider) {
+		if (heightPredicate != null && !heightPredicate.test(pos.getY())) {
+			return false;
+		}
+
+		if (faces != null) {
+			EnumFacing face = quad.getFace();
+			if (face == null) {
 				return false;
 			}
-		}
-		if (faces != null) {
-			Direction face = /* quad.lightFace() */ quad.direction();
- 			if (appearanceState.hasProperty(BlockStateProperties.AXIS)) {
- 				Direction.Axis axis = appearanceState.getValue(BlockStateProperties.AXIS);
- 				if (axis == Direction.Axis.X) {
- 					face = face.getClockWise(Direction.Axis.Z);
-				} else if (axis == Direction.Axis.Z) {
-					face = face.getCounterClockWise(Direction.Axis.X);
+
+			IProperty<?> axisProperty = null;
+			for (IProperty<?> property : appearanceState.getProperties().keySet()) {
+				if (property.getName().equals("axis")) {
+					axisProperty = property;
+					break;
 				}
 			}
+			if (axisProperty != null) {
+				Object axisValue = appearanceState.getValue(axisProperty);
+				if (axisValue instanceof EnumFacing.Axis axis) {
+					if (axis == EnumFacing.Axis.X) {
+						face = face.rotateAround(EnumFacing.Axis.Z);
+					} else if (axis == EnumFacing.Axis.Z) {
+						face = face.rotateAround(EnumFacing.Axis.X);
+					}
+				}
+			}
+
 			if (!faces.contains(face)) {
 				return false;
 			}
 		}
+
 		if (biomePredicate != null) {
-			Biome biome = dataProvider.getData(ProcessingDataKeys.BIOME_CACHE).get(level, pos);
+			Biome biome = level.getBiome(pos);
 			if (biome == null || !biomePredicate.test(biome)) {
 				return false;
 			}
 		}
+
 		if (blockEntityNamePredicate != null) {
-			String blockEntityName = dataProvider.getData(ProcessingDataKeys.BLOCK_ENTITY_NAME_CACHE).get(level, pos);
-			if (blockEntityName == null || !blockEntityNamePredicate.test(blockEntityName)) {
+			TileEntity blockEntity = level.getTileEntity(pos);
+			if (blockEntity instanceof IWorldNameable nameable && nameable.hasCustomName()) {
+				String blockEntityName = nameable.getDisplayName().getUnformattedText();
+				if (blockEntityName == null || !blockEntityNamePredicate.test(blockEntityName)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
 	public static BaseProcessingPredicate fromProperties(BaseCtmProperties properties) {
 		return new BaseProcessingPredicate(properties.getFaces(), properties.getBiomePredicate(), properties.getHeightPredicate(), properties.getBlockEntityNamePredicate());
-	}
-
-	public static class BiomeCache {
-		@Nullable
-		protected Biome biome;
-		protected boolean invalid = true;
-
-		@Nullable
-		public Biome get(BlockAndTintGetter level, BlockPos pos) {
-			if (invalid) {
-				// biome = level.hasBiomes() ? level.getBiomeFabric(pos).value() : null;
-				BlockAndTintGetterExtension extension = (BlockAndTintGetterExtension) level;
-				biome = extension.continuity$hasBiome() ? extension.continuity$getBiome(pos).value() : null;
-				invalid = false;
-			}
-			return biome;
-		}
-
-		public void reset() {
-			invalid = true;
-		}
-	}
-
-	public static class BlockEntityNameCache {
-		@Nullable
-		protected String blockEntityName;
-		protected boolean invalid = true;
-
-		@Nullable
-		public String get(BlockAndTintGetter level, BlockPos pos) {
-			if (invalid) {
-				BlockEntity blockEntity = level.getBlockEntity(pos);
-				if (blockEntity instanceof Nameable nameable) {
-					if (nameable.hasCustomName()) {
-						blockEntityName = nameable.getCustomName().getString();
-					} else {
-						blockEntityName = null;
-					}
-				} else {
-					blockEntityName = null;
-				}
-				invalid = false;
-			}
-			return blockEntityName;
-		}
-
-		public void reset() {
-			invalid = true;
-		}
 	}
 }

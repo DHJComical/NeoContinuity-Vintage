@@ -4,22 +4,22 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.CachingPredicates;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.ResourceLocation;
 
 public class BaseCachingPredicates implements CachingPredicates {
 	@Nullable
-	protected Set<Identifier> spriteIdSet;
+	protected Set<ResourceLocation> spriteIdSet;
 	@Nullable
-	protected Predicate<BlockState> blockStatePredicate;
+	protected Predicate<IBlockState> blockStatePredicate;
 	protected boolean isValidForMultipass;
 
-	public BaseCachingPredicates(@Nullable Set<Identifier> spriteIdSet, @Nullable Predicate<BlockState> blockStatePredicate, boolean isValidForMultipass) {
+	public BaseCachingPredicates(@Nullable Set<ResourceLocation> spriteIdSet, @Nullable Predicate<IBlockState> blockStatePredicate, boolean isValidForMultipass) {
 		this.spriteIdSet = spriteIdSet;
 		this.blockStatePredicate = blockStatePredicate;
 		this.isValidForMultipass = isValidForMultipass;
@@ -33,7 +33,8 @@ public class BaseCachingPredicates implements CachingPredicates {
 	@Override
 	public boolean affectsSprite(TextureAtlasSprite sprite) {
 		if (spriteIdSet != null) {
-			return spriteIdSet.contains(sprite.contents().name());
+			ResourceLocation spriteId = new ResourceLocation(sprite.getIconName());
+			return spriteIdSet.contains(spriteId);
 		}
 		return false;
 	}
@@ -44,7 +45,7 @@ public class BaseCachingPredicates implements CachingPredicates {
 	}
 
 	@Override
-	public boolean affectsBlockState(BlockState state) {
+	public boolean affectsBlockState(IBlockState state) {
 		if (blockStatePredicate != null) {
 			return blockStatePredicate.test(state);
 		}
@@ -64,7 +65,7 @@ public class BaseCachingPredicates implements CachingPredicates {
 		}
 
 		@Override
-		public CachingPredicates createPredicates(T properties, Function<Identifier, TextureAtlasSprite> spriteGetter) {
+		public CachingPredicates createPredicates(T properties, Function<ResourceLocation, TextureAtlasSprite> spriteGetter) {
 			return new BaseCachingPredicates(properties.getMatchTilesSet(), properties.getMatchBlocksPredicate(), isValidForMultipass);
 		}
 	}

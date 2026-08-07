@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "me.pepperbell.continuity.client.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(DEFAULT)",
+  "client": [
+    "TextureMapMixin"
+  ],
+  "server": [],
+  "mixins": [],
+  "setSourceFile": true,
+  "minVersion": "0.8.7"
+}

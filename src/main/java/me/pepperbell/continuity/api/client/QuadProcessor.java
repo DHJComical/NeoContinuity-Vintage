@@ -1,23 +1,20 @@
 package me.pepperbell.continuity.api.client;
 
+import java.util.List;
 import java.util.function.Function;
 
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import me.pepperbell.continuity.client.model.QuadCollectionBuilder;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public interface QuadProcessor {
-	ProcessingResult processQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context);
+	ProcessingResult processQuad(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, int pass, ProcessingContext context);
 
 	interface ProcessingContext extends ProcessingDataProvider {
-		/* QuadEmitter */ QuadCollectionBuilder getExtraQuadEmitter();
+		List<BakedQuad> getExtraQuads();
 	}
 
 	enum ProcessingResult {
@@ -28,6 +25,6 @@ public interface QuadProcessor {
 	}
 
 	interface Factory<T extends CtmProperties> {
-		QuadProcessor createProcessor(T properties, Function<Identifier, TextureAtlasSprite> spriteGetter);
+		QuadProcessor createProcessor(T properties, Function<ResourceLocation, TextureAtlasSprite> spriteGetter);
 	}
 }

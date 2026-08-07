@@ -1,11 +1,10 @@
 package me.pepperbell.continuity.client.processor;
 
 import me.pepperbell.continuity.client.util.QuadUtil;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.EnumFacing;
 
 public enum OrientationMode {
 	NONE,
@@ -18,16 +17,29 @@ public enum OrientationMode {
 			{ 2, 0, 2, 0, 1, 3 }
 	};
 
-	public int getOrientation(/* QuadView */ MutableQuad quad, BlockState state) {
+	public int getOrientation(BakedQuad quad, IBlockState state) {
 		return switch (this) {
 			case NONE -> 0;
 			case STATE_AXIS -> {
-				if (state.hasProperty(BlockStateProperties.AXIS)) {
-					Direction.Axis axis = state.getValue(BlockStateProperties.AXIS);
-					yield AXIS_ORIENTATIONS[axis.ordinal()][/* quad.lightFace() */ quad.direction().ordinal()];
-				} else {
+				EnumFacing face = quad.getFace();
+				if (face == null) {
 					yield 0;
 				}
+				IProperty<?> axisProperty = null;
+				for (IProperty<?> property : state.getProperties().keySet()) {
+					if (property.getName().equals("axis")) {
+						axisProperty = property;
+						break;
+					}
+				}
+				if (axisProperty == null) {
+					yield 0;
+				}
+				Object axisValue = state.getValue(axisProperty);
+				if (axisValue instanceof EnumFacing.Axis axis) {
+					yield AXIS_ORIENTATIONS[axis.ordinal()][face.ordinal()];
+				}
+				yield 0;
 			}
 			case TEXTURE -> QuadUtil.getTextureOrientation(quad);
 		};

@@ -6,15 +6,15 @@ import java.util.function.Function;
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.util.ResourceLocation;
 
 public abstract class AbstractQuadProcessorFactory<T extends BaseCtmProperties> implements QuadProcessor.Factory<T> {
 	@Override
-	public QuadProcessor createProcessor(T properties, Function<Identifier, TextureAtlasSprite> spriteGetter) {
+	public QuadProcessor createProcessor(T properties, Function<ResourceLocation, TextureAtlasSprite> spriteGetter) {
 		int spriteAmount = getSpriteAmount(properties);
-		List<Identifier> spriteIds = properties.getSpriteIds();
+		List<ResourceLocation> spriteIds = properties.getSpriteIds();
 		int provided = spriteIds.size();
 		int max = provided;
 
@@ -24,11 +24,11 @@ public abstract class AbstractQuadProcessorFactory<T extends BaseCtmProperties> 
 		}
 
 		TextureAtlasSprite[] sprites = new TextureAtlasSprite[spriteAmount];
-		TextureAtlasSprite missingSprite = spriteGetter.apply(MissingTextureAtlasSprite.getLocation());
+		TextureAtlasSprite missingSprite = spriteGetter.apply(TextureMap.LOCATION_MISSING_TEXTURE);
 		boolean supportsNullSprites = supportsNullSprites(properties);
 		for (int i = 0; i < max; i++) {
 			TextureAtlasSprite sprite;
-			Identifier spriteId = spriteIds.get(i);
+			ResourceLocation spriteId = spriteIds.get(i);
 			if (spriteId.equals(BaseCtmProperties.SPECIAL_SKIP_ID)) {
 				sprite = missingSprite;
 			} else if (spriteId.equals(BaseCtmProperties.SPECIAL_DEFAULT_ID)) {

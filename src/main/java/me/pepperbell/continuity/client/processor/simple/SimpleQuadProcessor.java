@@ -1,21 +1,20 @@
 package me.pepperbell.continuity.client.processor.simple;
 
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.processor.AbstractQuadProcessorFactory;
 import me.pepperbell.continuity.client.processor.BaseProcessingPredicate;
 import me.pepperbell.continuity.client.processor.ProcessingPredicate;
+import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.properties.BaseCtmProperties;
-import me.pepperbell.continuity.client.util.QuadUtil;
 import me.pepperbell.continuity.client.util.RenderUtil;
-// import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuadRetextured;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class SimpleQuadProcessor implements QuadProcessor {
 	protected SpriteProvider spriteProvider;
@@ -27,22 +26,23 @@ public class SimpleQuadProcessor implements QuadProcessor {
 	}
 
 	@Override
-	public ProcessingResult processQuad(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite sprite, BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, RandomSource random, int pass, ProcessingContext context) {
+	public ProcessingResult processQuad(BakedQuad quad, TextureAtlasSprite sprite, IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, long rand, int pass, ProcessingContext context) {
 		if (!processingPredicate.shouldProcessQuad(quad, sprite, level, pos, appearanceState, state, context)) {
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
-		TextureAtlasSprite newSprite = spriteProvider.getSprite(quad, sprite, level, pos, appearanceState, state, random, context);
-		return process(quad, sprite, newSprite);
+		TextureAtlasSprite newSprite = spriteProvider.getSprite(quad, sprite, level, pos, appearanceState, state, rand, context);
+		return process(quad, sprite, newSprite, context);
 	}
 
-	public static ProcessingResult process(/* MutableQuadView */ MutableQuad quad, TextureAtlasSprite oldSprite, @Nullable TextureAtlasSprite newSprite) {
+	public static ProcessingResult process(BakedQuad quad, TextureAtlasSprite oldSprite, @Nullable TextureAtlasSprite newSprite, ProcessingContext context) {
 		if (newSprite == null) {
 			return ProcessingResult.STOP;
 		}
 		if (RenderUtil.isMissingSprite(newSprite)) {
+			ContinuityClient.LOGGER.debug("Skipping CTM replacement for '{}' because replacement sprite '{}' is missing", oldSprite.getIconName(), newSprite.getIconName());
 			return ProcessingResult.NEXT_PROCESSOR;
 		}
-		QuadUtil.interpolate(quad, oldSprite, newSprite);
+		context.getExtraQuads().add(new BakedQuadRetextured(quad, newSprite));
 		return ProcessingResult.NEXT_PASS;
 	}
 

@@ -1,9 +1,6 @@
 {
   "pack": {
-    "min_format": 84,
-    "max_format": 999,
-    "description": {
-      "translate": "resourcePack.continuity.glass_pane_culling_fix.description"
-    }
+    "pack_format": 3,
+    "description": "Continuity Glass Pane Culling Fix"
   }
 }

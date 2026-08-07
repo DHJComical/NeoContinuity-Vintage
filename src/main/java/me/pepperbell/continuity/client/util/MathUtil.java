@@ -1,10 +1,13 @@
 package me.pepperbell.continuity.client.util;
 
-import net.minecraft.util.Mth;
+import net.minecraft.util.math.MathHelper;
 
 public final class MathUtil {
 	// Borrowed from SplittableRandom
 	public static final long GOLDEN_GAMMA = 0x9e3779b97f4a7c15L;
+
+	private MathUtil() {
+	}
 
 	public static int signum(int value) {
 		if (value > 0) {
@@ -46,7 +49,7 @@ public final class MathUtil {
 	}
 
 	public static int mix(int x, int y, int z, int face, int loops) {
-		return mix32((Mth.getSeed(x, y, z) ^ mix64(GOLDEN_GAMMA * (1 + face))) + GOLDEN_GAMMA * (1 + loops));
+		return mix32((MathHelper.getCoordinateRandom(x, y, z) ^ mix64(GOLDEN_GAMMA * (1 + face))) + GOLDEN_GAMMA * (1 + loops));
 	}
 
 	public static int removeSignBit(int value) {

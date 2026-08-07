@@ -69,7 +69,7 @@ public interface RandomIndexProvider {
 				weightSum += weights[i];
 			}
 
-			if (copiedLength < newWeights.length) {
+			if (copiedLength < newWeights.length && copiedLength > 0) {
 				int averageWeight = weightSum / copiedLength;
 				for (int i = copiedLength; i < newWeights.length; i++) {
 					newWeights[i] = averageWeight;

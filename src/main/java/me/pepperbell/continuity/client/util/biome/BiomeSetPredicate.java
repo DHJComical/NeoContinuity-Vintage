@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.biome.Biome;
 
 public class BiomeSetPredicate implements Predicate<Biome> {
 	private final Set<BiomeHolder> holders;

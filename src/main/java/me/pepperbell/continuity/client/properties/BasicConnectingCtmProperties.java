@@ -5,20 +5,22 @@ import java.util.Properties;
 
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.ConnectionPredicate;
-import me.pepperbell.continuity.client.util.SpriteCalculator;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public class BasicConnectingCtmProperties extends BaseCtmProperties {
 	protected ConnectionPredicate connectionPredicate;
 
-	public BasicConnectingCtmProperties(Properties properties, Identifier resourceId, PackResources pack, int packPriority, ResourceManager resourceManager, String method) {
+	public BasicConnectingCtmProperties(Properties properties, ResourceLocation resourceId, IResourcePack pack, int packPriority, IResourceManager resourceManager, String method) {
 		super(properties, resourceId, pack, packPriority, resourceManager, method);
 	}
 
@@ -67,24 +69,44 @@ public class BasicConnectingCtmProperties extends BaseCtmProperties {
 	public enum ConnectionType implements ConnectionPredicate {
 		BLOCK {
 			@Override
-			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
+			public boolean shouldConnect(IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, BlockPos otherPos, IBlockState otherAppearanceState, IBlockState otherState, EnumFacing face, TextureAtlasSprite quadSprite) {
 				return appearanceState.getBlock() == otherAppearanceState.getBlock();
 			}
 		},
 		TILE {
 			@Override
-			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
+			public boolean shouldConnect(IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, BlockPos otherPos, IBlockState otherAppearanceState, IBlockState otherState, EnumFacing face, TextureAtlasSprite quadSprite) {
 				if (appearanceState == otherAppearanceState) {
 					return true;
 				}
-				return SpriteCalculator.getSprites(otherAppearanceState, face).contains(quadSprite);
+				return stateUsesSprite(otherAppearanceState, face, quadSprite);
 			}
 		},
 		STATE {
 			@Override
-			public boolean shouldConnect(BlockAndTintGetter level, BlockPos pos, BlockState appearanceState, BlockState state, BlockPos otherPos, BlockState otherAppearanceState, BlockState otherState, Direction face, TextureAtlasSprite quadSprite) {
+			public boolean shouldConnect(IBlockAccess level, BlockPos pos, IBlockState appearanceState, IBlockState state, BlockPos otherPos, IBlockState otherAppearanceState, IBlockState otherState, EnumFacing face, TextureAtlasSprite quadSprite) {
 				return appearanceState == otherAppearanceState;
 			}
 		};
+
+		private static boolean stateUsesSprite(IBlockState state, EnumFacing face, TextureAtlasSprite sprite) {
+			IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelForState(state);
+			if (model == null) {
+				return false;
+			}
+			if (face != null && containsSprite(model.getQuads(state, face, 0), sprite)) {
+				return true;
+			}
+			return containsSprite(model.getQuads(state, null, 0), sprite);
+		}
+
+		private static boolean containsSprite(java.util.List<BakedQuad> quads, TextureAtlasSprite sprite) {
+			for (BakedQuad quad : quads) {
+				if (quad.getSprite() == sprite) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 }
