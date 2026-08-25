@@ -1,56 +1,71 @@
 ![logo](src/main/resources/assets/continuity/neo_continuity_icon.png)
 
-# NeoContinuity 26.1.x ([EN version](#english))
+# NeoContinuity 1.12.2 Vintage ([EN version](#english))
 
 ## 🍝赞助
 
-NeoContinuity 基本由我一人在 PepperCode1 所编写的 Continuity 基础之上完成.
-来自广大玩家们的赞助将用于后续的更快的新旧版本移植与改善, 感谢所有支持者!
+NeoContinuity-Vintage 是 [NeoContinuity](https://github.com/Argon4W/NeoContinuity) 的 1.12.2 移植版, 上游为 Argon4W 所编写的 NeoForge 原生分支, 其基于 PepperCode1 所编写的官方 Continuity.
 如果你喜欢这个 MOD, 并且想要支持 NeoContinuity 的开发, 请前往 [爱发电](https://afdian.com/a/argon4w) 为狐狸买一份意面.
-也十分感谢 PepperCode1 制作精良的 Continuity, 若想支持 Continuity 的开发, 请前往 [Buy Me a Coffee](https://buymeacoffee.com/peppercode1) 进行赞助.
+也十分感谢 Argon4W 制作精良的 NeoContinuity, 以及 PepperCode1 制作精良的官方 Continuity, 若想支持上游的开发, 请前往 [Buy Me a Coffee](https://buymeacoffee.com/peppercode1) 进行赞助.
 
 ## 🖥️模组介绍
 
-NeoContinuity 是Continuity 的非官方分支, 旨在于让 Continuity 能在 NeoForge 26.1.x 上 (无需信雅互联) 原生地运行, 并使用NeoForge API 完全替换 Fabric API 依赖. **请勿** 向原作者报告任何游玩此模组遇到的问题.
+NeoContinuity 1.12.2 Vintage 是 [NeoContinuity](https://github.com/Argon4W/NeoContinuity) (NeoForge 原生分支) 的 **1.12.2 移植版**, 基于 Cleanroom Loader, 并将渲染部分接入 Actinium 管线. 它让旧版 Minecraft 也能使用 OptiFine 连接纹理 (CTM) 与发光纹理资源包, 无需 OptiFine; 同时还额外兼容 CTM Mod 格式的贴图驱动资源包 (含 `ctm.json` / `ctm_logic` 自定义真值表). **请勿** 向官方或 NeoContinuity 作者报告任何游玩此模组遇到的问题.
 
 ## ✨为什么需要这个MOD
 
-Continuity 当前的 NeoForge 支持依赖于信雅互联 (Sinytra Connector) 与 FFAPI (Forgified-Fabric-API). 信雅互联与 FFAPI 引入游戏环境后会引起诸多兼容性问题, 或导致崩溃, 并且信雅互联与 FFAPI 暂未提供 NeoForge 26.1.x 的版本支持. 基于以上原因, 我决定制作原生支持 NeoForge 26.1.x 且移除所有 Fabric API 依赖的 Continuity 分支, 即 NeoContinuity.
+官方 Continuity 仅有 Fabric 版本, 而 [NeoContinuity](https://github.com/Argon4W/NeoContinuity) 带来了原生 NeoForge 分支, 本仓库则是将其带到 1.12.2. 在 1.12.2 上, OptiFine 与 CTM Mod 依赖各自的运行时注入, 与 Actinium 渲染管线存在兼容性冲突. 基于以上原因, 我决定将 Neo 移植到 1.12.2 并原生接入 Actinium, 让旧版客户端也能享受现代连接纹理与发光纹理资源包.
 
 ## ⚙️工作原理
 
-NeoContinuity 不依赖于 FFAPI (Forgified-Fabric-API), 我将 Continuity 所使用的 Fabric API 进行了移除, 将其完全替换为原生的 NeoForge API, 减少了不必要的 JAR 体积占用和改善可能造成的兼容性问题, 让 Continuity 能够更好地融入 NeoForge 的运行环境.
+NeoContinuity 1.12.2 Vintage 在 1.12.2 上使用 Cleanroom Loader 提供的现代 Java 与 Mixin 能力, 在 NeoContinuity 已移除 Fabric API 依赖的基础上继续适配, 渲染挂载点替换为 Actinium 的 `BlockQuadTransformer` 地形渲染钩子, 通过资源包扫描与 `TextureStitchEvent` 将纹理注入方块图集, 在四边形层面完成连接纹理替换与发光叠加.
 
 ## ♻️API 替换:
-- Fabric 的 `emitQuads` 方法替换为 NeoForge 提供的扩展版 `collectParts` 方法.
-- Fabric 的 `QuadView` 与 `MutableQuadView` 替换为 NeoForge 提供的 `MutableQuad`.
-- Fabric 的 `MutableMesh` 替换为 `QuadCollectionBuilder` (可重用的 `QuadCollection$Builder`).
+- Fabric 的 `emitQuads` 方法替换为 Actinium 提供的 `BlockQuadTransformer.transform` 方法.
+- Fabric 的 `QuadView` 与 `MutableQuadView` 替换为 `BakedQuad` 与 `MutableQuad` 线段视图.
+- Fabric 的 `MutableMesh` 替换为可复用的四边形构建器.
+- Fabric 的资源加载与配置 API 替换为 Cleanroom / Forge 原生事件与 JSON 配置.
+
+## ✨特性
+
+- OptiFine 连接纹理: `ctm` / `glass` / `horizontal` / `bookshelf` / `vertical` / `top` / `fixed` / `random` / `repeat`.
+- OptiFine 发光纹理: `_e` 后缀发光贴图, 支持方块与物品.
+- CTM Mod 格式兼容: `.png.mcmeta` 的 `"ctm"` section (v1 类型) 与 `ctm.json` + `ctm_logic/*.json` 自定义真值表, 含 `proxy` 转发.
+- 内置资源包: 默认连接纹理包 (玻璃 / 砂岩 / 书架) 与玻璃板剔除修复包.
 
 <a id="english"></a>
-# NeoContinuity 26.1.x
+# NeoContinuity 1.12.2 Vintage
 
 ## 🍝Sponsorship
 
-This MOD is almost done by myself based on the Continuity codebase written by PepperCode1.
+NeoContinuity is a 1.12.2 port of [NeoContinuity](https://github.com/Argon4W/NeoContinuity), the native NeoForge fork written by Argon4W based on PepperCode1's official Continuity.
 Sponsorships from players can ensure the future ports to other versions. Thanks for everyone that support this MOD! If you like it and want to support my work on development of NeoContinuity, please consider sponsor me at [爱发电](https://afdian.com/a/argon4w).
-Also thanks for PepperCode1 for making such great Continuity MOD. If you want to support the development of Continuity, Please sponsor at [Buy Me a Coffee](https://buymeacoffee.com/peppercode1).
+Also thanks for Argon4W for making such great NeoContinuity, and PepperCode1 for making the official Continuity. If you want to support the upstream development, Please sponsor at [Buy Me a Coffee](https://buymeacoffee.com/peppercode1).
 
 ## 🖥️MOD Description
 
-NeoContinuity is an unofficial fork of Continuity, aiming to run Continuity natively on NeoForge (without connector) and replace all FFAPI (Forgified-Fabric-API) dependencies with NeoForge API. Do **NOT** report issues encountered with this mod to the original.
+NeoContinuity 1.12.2 Vintage is a **1.12.2 port of [NeoContinuity](https://github.com/Argon4W/NeoContinuity)** (the native NeoForge fork), built on Cleanroom Loader, with rendering integrated into the Actinium pipeline. It brings OptiFine connected textures (CTM) and emissive textures to legacy Minecraft without requiring OptiFine, and additionally supports CTM Mod format texture-driven resource packs (including `ctm.json` / `ctm_logic` custom truth tables). Do **NOT** report issues encountered with this mod to the official or NeoContinuity's author.
 
 ## ✨Why need this MOD
 
-NeoForge support of Continuity relies heavily on Sinytra Connector and FFAPI (Forgified-FabricAPI). Connector and FFAPI may cause compatibility issues or crashes when introduced into the environment, and they have not supported NeoForge 26.1.x yet. For these reasons, I decide to fork Continuity as NeoContinuity and make it run natively on NeoForge without Fabric API.
+The official Continuity is Fabric-only, while [NeoContinuity](https://github.com/Argon4W/NeoContinuity) provides a native NeoForge fork; this repository brings it to 1.12.2. On 1.12.2, OptiFine and CTM Mod rely on their own runtime injection, which conflicts with the Actinium rendering pipeline. For these reasons, I decided to port Neo to 1.12.2 and integrate it natively with Actinium, so legacy clients can enjoy modern connected and emissive texture resource packs.
 
 ## ⚙️How it works
 
-NeoContinuity does not rely on the FFAPI (Forgified-Fabric-API), I removed all FFAPI dependencies and replaced them with native NeoForge API to reduce the jar size and mitigate compatibility issues caused by FFAPI, which makes Continuity to better adapt to the NeoForge runtime environment.
+On 1.12.2, NeoContinuity 1.12.2 Vintage uses modern Java and Mixin from Cleanroom Loader, building on top of NeoContinuity's Fabric-API-free codebase, and replaces the rendering hooks with Actinium's `BlockQuadTransformer` terrain pipeline. Textures are injected into the block atlas through resource pack scanning and `TextureStitchEvent`, and the connected/emissive replacement happens at the quad level.
 
 ## ♻️API Replacement:
-- Fabric's `emitQuads` replaced with NeoForge's extended `collectParts` method.
-- Fabric's `QuadView` and `MutableQuadView` replaced with NeoForge's `MutableQuad`.
-- Fabric's `MutableMesh` replaced with `QuadCollectionBuilder` (Reusable `QuadCollection$Builder`).
+- Fabric's `emitQuads` replaced with Actinium's `BlockQuadTransformer.transform` method.
+- Fabric's `QuadView` and `MutableQuadView` replaced with `BakedQuad` and `MutableQuad` views.
+- Fabric's `MutableMesh` replaced with a reusable quad builder.
+- Fabric's resource loading and config APIs replaced with Cleanroom/Forge native events and JSON config.
+
+## ✨Features
+
+- OptiFine connected textures: `ctm` / `glass` / `horizontal` / `bookshelf` / `vertical` / `top` / `fixed` / `random` / `repeat`.
+- OptiFine emissive textures: `_e`-suffixed emissive textures for blocks and items.
+- CTM Mod format compatibility: `"ctm"` section of `.png.mcmeta` (v1 types) and `ctm.json` + `ctm_logic/*.json` custom truth tables, including `proxy` forwarding.
+- Built-in resource packs: default connected textures pack (glass / sandstone / bookshelves) and glass pane culling fix pack.
 
 # Continuity
 
