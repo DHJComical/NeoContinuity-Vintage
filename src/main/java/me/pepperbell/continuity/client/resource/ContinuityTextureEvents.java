@@ -2,7 +2,12 @@ package me.pepperbell.continuity.client.resource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
+import me.pepperbell.continuity.client.ctm.CtmDefinition;
+import me.pepperbell.continuity.client.ctm.CtmMcmetaLoader;
+import me.pepperbell.continuity.client.ctm.CtmModLoader;
+import me.pepperbell.continuity.client.config.ContinuityConfig;
 import me.pepperbell.continuity.impl.client.EmissiveSpriteApiImpl;
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.model.QuadProcessors;
@@ -26,6 +31,20 @@ public class ContinuityTextureEvents {
 		for (ResourceLocation spriteId : lastResult.getBlockAtlasSpriteDependencies()) {
 			textureMap.setTextureEntry(new RedirectedTextureAtlasSprite(spriteId));
 		}
+
+		// CTM Mod format: register additional textures (base + sheet) into the block atlas.
+		// CTM texture paths are vanilla block-atlas paths (e.g. "minecraft:blocks/glass-ctm"),
+		// loaded from textures/<path>.png, so the vanilla registerSprite path is used.
+		if (ContinuityConfig.INSTANCE.ctmModTextures.get()) {
+			List<CtmDefinition> ctmDefinitions = CtmMcmetaLoader.loadAll();
+			for (CtmDefinition definition : ctmDefinitions) {
+				for (ResourceLocation spriteId : definition.getSpriteDependencies()) {
+					// registerSprite is idempotent for already-registered sprites
+					textureMap.registerSprite(spriteId);
+				}
+			}
+			ContinuityClient.LOGGER.debug("Registered CTM Mod sprite dependencies from {} definitions", ctmDefinitions.size());
+		}
 	}
 
 	@SubscribeEvent
@@ -34,8 +53,23 @@ public class ContinuityTextureEvents {
 			lastResult = CtmPropertiesLoader.loadAll();
 		}
 		TextureMap textureMap = Minecraft.getMinecraft().getTextureMapBlocks();
-		List<QuadProcessors.ProcessorHolder> processorHolders = lastResult.createProcessorHolders(id -> textureMap.getAtlasSprite(id.toString()));
+		Function<ResourceLocation, TextureAtlasSprite> spriteGetter = id -> textureMap.getAtlasSprite(id.toString());
+		List<QuadProcessors.ProcessorHolder> processorHolders = lastResult.createProcessorHolders(spriteGetter);
 		ContinuityClient.LOGGER.debug("Reloaded {} CTM processor holders", processorHolders.size());
+
+		// CTM Mod format definitions (texture-mcmeta driven)
+		if (ContinuityConfig.INSTANCE.ctmModTextures.get()) {
+			List<CtmDefinition> ctmDefinitions = CtmMcmetaLoader.loadAll();
+			for (CtmDefinition definition : ctmDefinitions) {
+				CtmModLoader loader = new CtmModLoader(definition);
+				QuadProcessors.ProcessorHolder holder = new QuadProcessors.ProcessorHolder(
+						loader.getProcessorFactory().createProcessor(definition, spriteGetter),
+						loader.getPredicatesFactory().createPredicates(definition, spriteGetter));
+				processorHolders.add(holder);
+			}
+			ContinuityClient.LOGGER.debug("Reloaded {} CTM Mod processor holders", ctmDefinitions.size());
+		}
+
 		QuadProcessors.reload(processorHolders);
 		String suffix = EmissiveSuffixLoader.getEmissiveSuffix();
 		if (suffix != null && !suffix.isEmpty()) {
