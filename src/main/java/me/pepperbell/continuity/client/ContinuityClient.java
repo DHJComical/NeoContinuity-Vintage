@@ -137,7 +137,9 @@ public final class ContinuityClient {
 		CtmLoader<RandomCtmProperties> randomLoader = new CtmLoader<>() {
 			@Override
 			public CtmProperties.Factory<RandomCtmProperties> getPropertiesFactory() {
-				return RandomCtmProperties::new;
+				// Must go through wrapFactory so init() parses and validates tiles (like all
+				// other loaders); a bare constructor leaves spriteIds empty.
+				return BaseCtmProperties.wrapFactory(RandomCtmProperties::new);
 			}
 
 			@Override
