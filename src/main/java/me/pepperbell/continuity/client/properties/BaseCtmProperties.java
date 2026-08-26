@@ -165,7 +165,11 @@ public class BaseCtmProperties implements CtmProperties {
 			if (basePath.startsWith("textures/")) {
 				spriteBasePath = basePath.substring(9);
 			} else if (basePath.startsWith("optifine/")) {
+				// Strip "optifine/" so the redirect maps continuity_reserved/<rest> back to optifine/<rest>
 				spriteBasePath = ResourceRedirectHandler.SPRITE_PATH_START + basePath.substring(9);
+			} else if (basePath.startsWith("mcpatcher/")) {
+				// Keep "mcpatcher/" so the redirect maps continuity_reserved/mcpatcher/<rest> back to mcpatcher/<rest>
+				spriteBasePath = ResourceRedirectHandler.SPRITE_PATH_START + basePath;
 			} else {
 				spriteBasePath = null;
 			}
@@ -235,17 +239,17 @@ public class BaseCtmProperties implements CtmProperties {
 						path = "optifine/" + path.substring(1);
 					}
 
-					if (!path.startsWith("textures/") && !path.startsWith("optifine/")) {
+					if (!path.startsWith("textures/") && !path.startsWith("optifine/") && !path.startsWith("mcpatcher/")) {
 						path = basePath + path;
 					}
 
-					if (path.startsWith("optifine/")) {
+					if (path.startsWith("optifine/") || path.startsWith("mcpatcher/")) {
 						namespace = resourceId.getNamespace();
 					}
 				} else {
 					if (!path.contains("/")) {
 						path = "textures/block/" + path;
-					} else if (!path.startsWith("textures/") && !path.startsWith("optifine/")) {
+					} else if (!path.startsWith("textures/") && !path.startsWith("optifine/") && !path.startsWith("mcpatcher/")) {
 						path = "textures/" + path;
 					}
 				}
@@ -254,6 +258,8 @@ public class BaseCtmProperties implements CtmProperties {
 					path = path.substring(9);
 				} else if (path.startsWith("optifine/")) {
 					path = ResourceRedirectHandler.SPRITE_PATH_START + path.substring(9);
+				} else if (path.startsWith("mcpatcher/")) {
+					path = ResourceRedirectHandler.SPRITE_PATH_START + path;
 				} else {
 					spriteIds.add(TextureMap.LOCATION_MISSING_TEXTURE);
 					continue;

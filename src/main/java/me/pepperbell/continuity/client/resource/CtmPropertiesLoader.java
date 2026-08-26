@@ -177,7 +177,7 @@ public class CtmPropertiesLoader {
 		}
 		String namespace = rest.substring(0, slash);
 		String path = rest.substring(slash + 1);
-		if (!path.startsWith("optifine/ctm/")) {
+		if (!path.startsWith("optifine/ctm/") && !path.startsWith("mcpatcher/ctm/")) {
 			return null;
 		}
 		return new ResourcePackPath(namespace, path);
