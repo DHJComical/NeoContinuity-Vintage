@@ -62,8 +62,9 @@ class McpatcherTileParsingTest {
 		}
 
 		void parse() {
-			parseTiles();
+			init();
 		}
+
 
 		List<ResourceLocation> tiles() {
 			return getSpriteIds();
@@ -103,4 +104,20 @@ class McpatcherTileParsingTest {
 			assertTrue(tiles.size() > 0, "tiles=[" + tilesValue + "] should resolve at least one sprite, got " + tiles);
 		}
 	}
+
+	@Test
+	void relativeMatchTilesAlsoMatchInferredBlock() {
+		// MCPatcher packs use "matchTiles=./1.png" naming the tile source inside the properties
+		// directory. OptiFine resolves these to the block named by ctm/<block>/...; we must also
+		// match that block's vanilla sprite (e.g. blocks/stone) for repeat to apply.
+		Properties props = new Properties();
+		props.setProperty("matchTiles", "./1.png");
+		TestProps test = new TestProps(props, new ResourceLocation("minecraft",
+				"mcpatcher/ctm/stone/default/1.properties"));
+		test.parse();
+		java.util.Set<ResourceLocation> match = test.getMatchTilesSet();
+		assertTrue(match != null && match.contains(new ResourceLocation("minecraft", "blocks/stone")),
+				"relative matchTiles should also match inferred block, got " + match);
+	}
+
 }

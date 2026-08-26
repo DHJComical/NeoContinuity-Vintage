@@ -69,6 +69,14 @@ public final class PropertiesParsingHelper {
 						path = path.substring(17);
 					} else if (path.startsWith("./")) {
 						path = basePath + path.substring(2);
+						// MCPatcher-style relative matchTiles ("matchTiles=./1.png") name the
+						// tile source inside the properties directory. OptiFine resolves packs like
+						// this to the block named by the parent ctm/<block>/ path, so matching
+						// fails unless we also match that block's vanilla sprite (e.g. blocks/stone).
+						String blockName = inferBlockNameFromBasePath(basePath);
+						if (blockName != null) {
+							set.add(new ResourceLocation(fileLocation.getNamespace(), "blocks/" + blockName));
+						}
 					} else if (path.startsWith("~/")) {
 						path = "optifine/" + path.substring(2);
 					} else if (path.startsWith("/")) {
@@ -84,7 +92,8 @@ public final class PropertiesParsingHelper {
 						namespace = fileLocation.getNamespace();
 					}
 				} else if (!path.contains("/")) {
-					path = "block/" + path;
+					// 1.12.2 vanilla block textures live under blocks/ (plural)
+					path = "blocks/" + path;
 				}
 
 				if (namespace == null) {
@@ -98,6 +107,28 @@ public final class PropertiesParsingHelper {
 			return set;
 		}
 		return Collections.emptySet();
+	}
+
+	/**
+	 * Infers the target block name from a CTM properties path of the form
+	 * {@code mcpatcher/ctm/<block>/...} or {@code optifine/ctm/<block>/...}. Returns null when the
+	 * path does not match this layout.
+	 */
+	@Nullable
+	private static String inferBlockNameFromBasePath(String basePath) {
+		String path = basePath;
+		if (path.startsWith("mcpatcher/ctm/")) {
+			path = path.substring("mcpatcher/ctm/".length());
+		} else if (path.startsWith("optifine/ctm/")) {
+			path = path.substring("optifine/ctm/".length());
+		} else {
+			return null;
+		}
+		int slash = path.indexOf('/');
+		if (slash > 0) {
+			path = path.substring(0, slash);
+		}
+		return path.isEmpty() ? null : path;
 	}
 
 	@Nullable
