@@ -35,8 +35,12 @@ class ResourceRedirectHandlerTest {
 	}
 
 	@Test
-	void unknownReservedPrefixUnchanged() {
-		ResourceLocation id = new ResourceLocation("minecraft", "textures/continuity_reserved/unknown/path");
-		assertEquals(id, ResourceRedirectHandler.redirect(id));
+	void unprefixedReservedPathGetsOptifinePrefix() {
+		// OptiFine packs strip "optifine/" in parseTiles, so a reserved path without a known
+		// prefix is re-prefixed with optifine/ to restore the pre-mcpatcher behavior.
+		ResourceLocation id = new ResourceLocation("minecraft", "textures/continuity_reserved/ctm/default/glass/blue/42");
+		ResourceLocation redirected = ResourceRedirectHandler.redirect(id);
+		assertEquals("optifine/ctm/default/glass/blue/42", redirected.getPath());
+		assertEquals("minecraft", redirected.getNamespace());
 	}
 }

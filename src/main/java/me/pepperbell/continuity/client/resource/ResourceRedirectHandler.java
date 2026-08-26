@@ -22,11 +22,14 @@ public final class ResourceRedirectHandler {
 			return id;
 		}
 		String rest = path.substring(PATH_START_LENGTH);
+		// If the sprite id already carries a known pack prefix (mcpatcher/), use it as-is.
+		// Otherwise treat the rest as an OptiFine path (parseTiles strips "optifine/") and
+		// re-add it, restoring the pre-mcpatcher behavior.
 		for (String prefix : REDIRECT_PREFIXES) {
 			if (rest.startsWith(prefix)) {
 				return new ResourceLocation(id.getNamespace(), rest);
 			}
 		}
-		return id;
+		return new ResourceLocation(id.getNamespace(), "optifine/" + rest);
 	}
 }
