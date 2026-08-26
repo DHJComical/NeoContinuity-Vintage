@@ -106,18 +106,34 @@ class McpatcherTileParsingTest {
 	}
 
 	@Test
-	void relativeMatchTilesAlsoMatchInferredBlock() {
-		// MCPatcher packs use "matchTiles=./1.png" naming the tile source inside the properties
-		// directory. OptiFine resolves these to the block named by ctm/<block>/...; we must also
-		// match that block's vanilla sprite (e.g. blocks/stone) for repeat to apply.
+	void relativeMatchTilesResolveToRedirectedTileId() {
+		// MCPatcher packs use "matchTiles=./1.png" naming a tile inside the properties directory.
+		// OptiFine resolves these to the tile's own sprite id (basePath + name), which is the same id
+		// that parseTiles registers under the continuity_reserved/ redirect. It does NOT infer a
+		// vanilla "blocks/<block>" sprite from the ctm/<block>/ path, so repeat rules for a nested
+		// directory (e.g. grass/block/top) must not leak onto the block named by the first path
+		// segment (e.g. blocks/grass for the tall-grass plant sprite).
 		Properties props = new Properties();
 		props.setProperty("matchTiles", "./1.png");
 		TestProps test = new TestProps(props, new ResourceLocation("minecraft",
-				"mcpatcher/ctm/stone/default/1.properties"));
+				"mcpatcher/ctm/grass/block/top/1.properties"));
 		test.parse();
 		java.util.Set<ResourceLocation> match = test.getMatchTilesSet();
-		assertTrue(match != null && match.contains(new ResourceLocation("minecraft", "blocks/stone")),
-				"relative matchTiles should also match inferred block, got " + match);
+		assertEquals(java.util.Set.of(new ResourceLocation("minecraft",
+						"continuity_reserved/mcpatcher/ctm/grass/block/top/1")), match,
+				"relative matchTiles should resolve to the redirected tile id only, got " + match);
+	}
+
+	@Test
+	void relativeMatchTilesDoNotMatchInferredBlockSprite() {
+		Properties props = new Properties();
+		props.setProperty("matchTiles", "./1.png");
+		TestProps test = new TestProps(props, new ResourceLocation("minecraft",
+				"mcpatcher/ctm/sand/red/1.properties"));
+		test.parse();
+		java.util.Set<ResourceLocation> match = test.getMatchTilesSet();
+		assertTrue(match == null || !match.contains(new ResourceLocation("minecraft", "blocks/sand")),
+				"relative matchTiles must not match blocks/sand for a red-sand rule, got " + match);
 	}
 
 }

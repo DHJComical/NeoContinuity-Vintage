@@ -21,6 +21,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 public class ContinuityCtmTransformer implements BlockQuadTransformer {
+	/**
+	 * MCPatcher/OptiFine packs chain CTM rules: one rule picks a variant entry tile (e.g. random),
+	 * then another rule matches that tile's sprite and expands it (e.g. repeat over a large surface).
+	 * OptiFine re-applies rules to the same quad with its new sprite up to three times. Mirror that
+	 * here so e.g. {@code stone1.properties} -> {@code 1.properties} connects a stone field.
+	 */
+	private static final int MAX_PROCESSING_PASSES = 3;
+
 	@Override
 	public List<BakedQuad> transform(IBlockState state, BlockPos pos, ActiniumBlockAccess blockAccess, BlockRenderLayer layer, EnumFacing side, List<BakedQuad> quads) {
 		ObjectArrayList<BakedQuad> output = new ObjectArrayList<>();
@@ -35,43 +43,7 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 			ProcessingContextImpl context = new ProcessingContextImpl();
 
 			for (BakedQuad quad : quads) {
-				TextureAtlasSprite sprite = quad.getSprite();
-				if (sprite == null) {
-					output.add(quad);
-					continue;
-				}
-
-				QuadProcessors.Slice slice = QuadProcessors.getCache(state).apply(sprite);
-				if (slice.processors().length == 0) {
-					output.add(quad);
-					continue;
-				}
-
-				context.reset();
-				boolean discarded = false;
-				boolean processed = false;
-				for (QuadProcessor processor : slice.processors()) {
-					QuadProcessor.ProcessingResult result = processor.processQuad(quad, sprite, blockAccess, pos, state, state, rand, 0, context);
-					if (result == QuadProcessor.ProcessingResult.DISCARD) {
-						discarded = true;
-						break;
-					}
-					if (result == QuadProcessor.ProcessingResult.NEXT_PROCESSOR) {
-						continue;
-					}
-
-					if (!context.getExtraQuads().isEmpty()) {
-						output.addAll(context.getExtraQuads());
-					} else {
-						output.add(quad);
-					}
-					processed = true;
-					break;
-				}
-
-				if (!discarded && !processed) {
-					output.add(quad);
-				}
+				processQuadChain(quad, state, pos, blockAccess, rand, context, output);
 			}
 		}
 
@@ -91,5 +63,73 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 		}
 
 		return output;
+	}
+
+	/**
+	 * Processes a single quad through the CTM pipeline, re-applying rules when a processor replaces
+	 * the quad's sprite with a new one (MCPatcher variant -> repeat chaining). The chain is bounded
+	 * to avoid infinite loops from circular rules.
+	 */
+	private void processQuadChain(BakedQuad input, IBlockState state, BlockPos pos, ActiniumBlockAccess blockAccess, long rand, ProcessingContextImpl context, ObjectArrayList<BakedQuad> output) {
+		BakedQuad current = input;
+		for (int pass = 0; pass < MAX_PROCESSING_PASSES; pass++) {
+			TextureAtlasSprite sprite = current.getSprite();
+			if (sprite == null) {
+				output.add(current);
+				return;
+			}
+
+			QuadProcessors.Slice slice = QuadProcessors.getCache(state).apply(sprite);
+			if (slice.processors().length == 0) {
+				output.add(current);
+				return;
+			}
+
+			context.reset();
+			boolean discarded = false;
+			boolean processed = false;
+			BakedQuad chained = null;
+			for (QuadProcessor processor : slice.processors()) {
+				QuadProcessor.ProcessingResult result = processor.processQuad(current, sprite, blockAccess, pos, state, state, rand, 0, context);
+				if (result == QuadProcessor.ProcessingResult.DISCARD) {
+					discarded = true;
+					break;
+				}
+				if (result == QuadProcessor.ProcessingResult.NEXT_PROCESSOR) {
+					continue;
+				}
+
+				if (!context.getExtraQuads().isEmpty()) {
+					// A single re-textured quad lets a later rule chain onto the new sprite (MCPatcher
+					// variant -> repeat). Multiple outputs (or no change) end the chain here.
+					if (context.getExtraQuads().size() == 1) {
+						BakedQuad next = context.getExtraQuads().get(0);
+						if (next.getSprite() != null && next.getSprite() != sprite) {
+							chained = next;
+							break;
+						}
+					}
+					output.addAll(context.getExtraQuads());
+				} else {
+					output.add(current);
+				}
+				processed = true;
+				break;
+			}
+
+			if (discarded) {
+				return;
+			}
+			if (chained != null) {
+				current = chained;
+				continue;
+			}
+			if (!processed) {
+				output.add(current);
+			}
+			return;
+		}
+		// Chain limit reached: emit whatever is left.
+		output.add(current);
 	}
 }
