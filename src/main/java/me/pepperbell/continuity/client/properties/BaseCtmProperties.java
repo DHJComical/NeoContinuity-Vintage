@@ -248,7 +248,8 @@ public class BaseCtmProperties implements CtmProperties {
 					}
 				} else {
 					if (!path.contains("/")) {
-						path = "textures/block/" + path;
+						// 1.12.2 vanilla block textures live under textures/blocks/ (plural)
+						path = "textures/blocks/" + path;
 					} else if (!path.startsWith("textures/") && !path.startsWith("optifine/") && !path.startsWith("mcpatcher/")) {
 						path = "textures/" + path;
 					}
@@ -273,6 +274,9 @@ public class BaseCtmProperties implements CtmProperties {
 				spriteIds.add(spriteId);
 				spriteDependencies.add(spriteId);
 			}
+		}
+		if (spriteIds.isEmpty()) {
+			ContinuityClient.LOGGER.error("CTM file '{}' in pack '{}' has no resolvable tiles", resourceId, packId);
 		}
 	}
 

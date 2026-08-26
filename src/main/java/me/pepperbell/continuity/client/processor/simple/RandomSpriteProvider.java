@@ -3,6 +3,7 @@ package me.pepperbell.continuity.client.processor.simple;
 import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.ProcessingDataProvider;
+import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.processor.ProcessingDataKeys;
 import me.pepperbell.continuity.client.processor.Symmetry;
 import me.pepperbell.continuity.client.properties.RandomCtmProperties;
@@ -62,8 +63,13 @@ public class RandomSpriteProvider implements SpriteProvider {
 	public static class Factory implements SpriteProvider.Factory<RandomCtmProperties> {
 		@Override
 		public SpriteProvider createSpriteProvider(TextureAtlasSprite[] sprites, RandomCtmProperties properties) {
-			if (sprites.length == 1) {
-				return new FixedSpriteProvider(sprites[0]);
+			if (sprites.length <= 1) {
+				if (sprites.length == 0) {
+					ContinuityClient.LOGGER.error("Random texture '{}' resolved to no sprites (tiles='{}')", properties.getResourceId(), properties.getSpriteIds());
+				}
+				// No sprites to pick from (or a single one): fall back to the fixed provider so the
+				// random index math never divides by zero.
+				return new FixedSpriteProvider(sprites.length == 0 ? null : sprites[0]);
 			}
 			return new RandomSpriteProvider(sprites, properties.getIndexProviderFactory().createIndexProvider(sprites.length), properties.getRandomLoops(), properties.getSymmetry(), properties.getLinked());
 		}
