@@ -37,9 +37,30 @@ dependencies {
         exclude group: 'remapped_curse.maven'
     }
 
+    // Actinium embeds these as ContainedDeps, but recent JitPack builds of it
+    // publish a POM without any dependency metadata, so they must be declared
+    // here or dev runs crash at startup with
+    // NoClassDefFoundError: org/antlr/v4/runtime/tree/ParseTree (font/shader
+    // init in Actinium's GLSM). Mirrors the runtime deps of Actinium 34dca21's
+    // POM ("Fix JitPack Maven coordinates").
+    runtimeOnly 'org.antlr:antlr4-runtime:4.13.2'
+    runtimeOnly('org.taumc:glsl-transformation-lib:0.2.0-32.g7dd88a4-GTNH') {
+        // Its pom pulls org.antlr:antlr4 (the codegen TOOL, unneeded at runtime),
+        // which drags in com.ibm.icu:icu4j:72.1. Cleanroom already provides icu4j
+        // 78.3 and mixing the two crashes tooltips with NoSuchMethodError
+        // BreakIterator.clone(). Actinium makes the same exclusion when embedding.
+        transitive = false
+    }
+    runtimeOnly 'org.anarres:jcpp:1.4.14'
+    runtimeOnly 'org.joml:joml:1.10.5'
+    runtimeOnly 'com.google.code.gson:gson:2.10.1'
+
     // Example - Dependency descriptor:
     // 'com.google.code.gson:gson:2.8.6' << group: com.google.code.gson, name:gson, version:2.8.6
     // 'group:name:version:classifier' where classifier is optional
+
+    modImplementation 'curse.maven:tinkers-antique-1242239:8666425'
+    modImplementation 'curse.maven:mantle-74924:2713386'
 
     // Example - CurseMaven dependencies:
     // 'curse.maven:had-enough-items-557549:4543375' << had-enough-items = project slug, 557549 = project id, 4543375 = file id
