@@ -10,6 +10,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import me.pepperbell.continuity.api.client.QuadProcessor;
+import me.pepperbell.continuity.client.model.BakedQuadLightmap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -90,6 +91,13 @@ public class CtmQuadProcessor implements QuadProcessor {
 				}
 			}
 		}
+		if (properties != null && properties.hasLight()) {
+			out.replaceAll(this::withConfiguredLight);
+		}
+	}
+
+	private BakedQuad withConfiguredLight(BakedQuad quad) {
+		return BakedQuadLightmap.withMinimum(quad, properties.getBlocklight(), properties.getSkylight());
 	}
 
 	protected void handleNormal(BakedQuad quad, TextureAtlasSprite sprite, List<BakedQuad> out) {

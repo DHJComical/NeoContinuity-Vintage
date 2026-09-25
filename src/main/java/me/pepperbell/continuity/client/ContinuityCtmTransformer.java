@@ -9,8 +9,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.pepperbell.continuity.api.client.EmissiveSpriteApi;
 import me.pepperbell.continuity.api.client.QuadProcessor;
 import me.pepperbell.continuity.client.model.EmissiveBakedQuad;
+import me.pepperbell.continuity.client.model.BakedQuadLightmap;
 import me.pepperbell.continuity.client.model.QuadProcessors;
 import me.pepperbell.continuity.client.config.ContinuityConfig;
+import me.pepperbell.continuity.client.ctm.CtmRenderLayerRouter;
 import me.pepperbell.continuity.impl.client.ProcessingContextImpl;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -35,15 +37,41 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 		if (quads.isEmpty()) {
 			return output;
 		}
+		boolean routeCtmLayers = ContinuityConfig.INSTANCE.connectedTextures.get()
+				&& ContinuityConfig.INSTANCE.ctmModTextures.get();
+		boolean routedLayer = routeCtmLayers && CtmRenderLayerRouter.isRoutedLayer(state, layer);
 
 		if (!ContinuityConfig.INSTANCE.connectedTextures.get()) {
-			output.addAll(quads);
+			for (BakedQuad quad : quads) {
+				if (quad instanceof EmissiveBakedQuad
+						&& (!routeCtmLayers || !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
+								quad.getSprite(), layer, routedLayer))) {
+					continue;
+				}
+				if (!routeCtmLayers || CtmRenderLayerRouter.shouldRender(quad.getSprite(), layer, routedLayer)) {
+					output.add(quad);
+				}
+			}
 		} else {
 			long rand = MathHelper.getPositionRandom(pos);
 			ProcessingContextImpl context = new ProcessingContextImpl();
 
 			for (BakedQuad quad : quads) {
-				processQuadChain(quad, state, pos, blockAccess, rand, context, output);
+				if (quad instanceof EmissiveBakedQuad
+						&& (!routeCtmLayers || !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
+								quad.getSprite(), layer, routedLayer))) {
+					continue;
+				}
+				if (!routeCtmLayers || CtmRenderLayerRouter.shouldRender(quad.getSprite(), layer, routedLayer)) {
+					int firstOutput = output.size();
+					processQuadChain(quad, state, pos, blockAccess, rand, context, output);
+					if (routeCtmLayers
+							&& CtmRenderLayerRouter.shouldFullbrightEmissiveFallback(quad.getSprite(), routedLayer)) {
+						for (int i = firstOutput; i < output.size(); i++) {
+							output.set(i, BakedQuadLightmap.withMinimum(output.get(i), 15, 15));
+						}
+					}
+				}
 			}
 		}
 
@@ -56,8 +84,9 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 					continue;
 				}
 				TextureAtlasSprite emissiveSprite = EmissiveSpriteApi.get().getEmissiveSprite(sprite);
-				if (emissiveSprite != null) {
-					output.add(new EmissiveBakedQuad(quad, emissiveSprite));
+				if (emissiveSprite != null
+						&& (!routeCtmLayers || CtmRenderLayerRouter.shouldGenerateSuffixOverlay(emissiveSprite))) {
+					output.add(BakedQuadLightmap.withMinimum(new EmissiveBakedQuad(quad, emissiveSprite), 15, 15));
 				}
 			}
 		}

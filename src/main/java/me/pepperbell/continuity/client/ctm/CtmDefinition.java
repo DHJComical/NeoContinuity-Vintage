@@ -35,9 +35,11 @@ public class CtmDefinition implements CtmProperties {
 	protected boolean useActualState;
 	protected Boolean connectInside; // null = use per-type default
 	protected boolean connectToDefined; // connect_to predicates present
+	protected Set<ResourceLocation> connectToBlocks = Set.of();
 	protected int blocklight;
 	protected int skylight;
 	protected boolean hasLight;
+	protected boolean emissiveFallback;
 
 	// map (random/pattern) options
 	protected int mapWidth = 2;
@@ -116,6 +118,10 @@ public class CtmDefinition implements CtmProperties {
 		return connectToDefined;
 	}
 
+	public Set<ResourceLocation> getConnectToBlocks() {
+		return connectToBlocks;
+	}
+
 	public int getBlocklight() {
 		return blocklight;
 	}
@@ -126,6 +132,10 @@ public class CtmDefinition implements CtmProperties {
 
 	public boolean hasLight() {
 		return hasLight;
+	}
+
+	public boolean hasEmissiveFallback() {
+		return emissiveFallback;
 	}
 
 	public int getMapWidth() {

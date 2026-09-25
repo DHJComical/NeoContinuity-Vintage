@@ -31,6 +31,7 @@ NeoContinuity 1.12.2 Vintage 在 1.12.2 上使用 Cleanroom Loader 提供的现�
 - OptiFine 连接纹理: `ctm` / `glass` / `horizontal` / `bookshelf` / `vertical` / `top` / `fixed` / `random` / `repeat`.
 - OptiFine 发光纹理: `_e` 后缀发光贴图, 支持方块与物品.
 - CTM Mod 格式兼容: `.png.mcmeta` 的 `"ctm"` section (v1 类型) 与 `ctm.json` + `ctm_logic/*.json` 自定义真值表, 含 `proxy` 转发.
+- CTM 元数据也可从 B.A.S.E / Resource Loader 的 `resources` 目录加载; 支持 `layer`、`extra.light` 和跨方块 `extra.connect_to`. 对 `_e` 贴图设置 `extra.emissive_fallback: true` 可在分层泛光时保留原图层的全亮发光.
 - 内置资源包: 默认连接纹理包 (玻璃 / 砂岩 / 书架) 与玻璃板剔除修复包.
 
 <a id="english"></a>
@@ -65,6 +66,7 @@ On 1.12.2, NeoContinuity 1.12.2 Vintage uses modern Java and Mixin from Cleanroo
 - OptiFine connected textures: `ctm` / `glass` / `horizontal` / `bookshelf` / `vertical` / `top` / `fixed` / `random` / `repeat`.
 - OptiFine emissive textures: `_e`-suffixed emissive textures for blocks and items.
 - CTM Mod format compatibility: `"ctm"` section of `.png.mcmeta` (v1 types) and `ctm.json` + `ctm_logic/*.json` custom truth tables, including `proxy` forwarding.
+- CTM metadata also loads from B.A.S.E / Resource Loader `resources` roots, with `layer`, `extra.light`, and cross-block `extra.connect_to`. Set `extra.emissive_fallback: true` on an `_e` texture to keep its full-bright overlay in the original layer alongside routed Bloom.
 - Built-in resource packs: default connected textures pack (glass / sandstone / bookshelves) and glass pane culling fix pack.
 
 # Continuity
