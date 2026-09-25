@@ -40,4 +40,16 @@ public final class EmissiveSuffixLoader {
 			ContinuityClient.LOGGER.error("Failed to load emissive suffix from file '" + LOCATION + "'", e);
 		}
 	}
+
+	public static boolean hasTexture(IResourceManager manager, ResourceLocation spriteId) {
+		ResourceLocation imageId = new ResourceLocation(spriteId.getNamespace(), "textures/" + spriteId.getPath() + ".png");
+		try (InputStream ignored = manager.getResource(imageId).getInputStream()) {
+			return true;
+		} catch (FileNotFoundException ignored) {
+			return false;
+		} catch (IOException e) {
+			ContinuityClient.LOGGER.warn("Could not inspect emissive texture '{}'", imageId, e);
+			return false;
+		}
+	}
 }

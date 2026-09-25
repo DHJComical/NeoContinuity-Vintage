@@ -45,21 +45,32 @@ public final class CtmMcmetaParser {
 	 */
 	@Nullable
 	public static CtmDefinition parse(ResourceLocation baseTextureId, IResource resource, String packId, int packPriority) {
+		return parseDetailed(baseTextureId, resource, packId, packPriority).definition();
+	}
+
+	public static ParseResult parseDetailed(ResourceLocation baseTextureId, IResource resource, String packId, int packPriority) {
 		try {
 			JsonObject mcmeta = readMcmeta(resource);
 			if (mcmeta == null) {
-				return null;
+				return new ParseResult(null, true);
 			}
 			JsonElement ctmElement = mcmeta.get(SECTION_NAME);
-			if (ctmElement == null || !ctmElement.isJsonObject()) {
-				return null;
+			if (ctmElement == null) {
+				return new ParseResult(null, false);
+			}
+			if (!ctmElement.isJsonObject()) {
+				return new ParseResult(null, true);
 			}
 			JsonObject ctm = ctmElement.getAsJsonObject();
-			return parse(baseTextureId, ctm, packId, packPriority);
+			CtmDefinition definition = parse(baseTextureId, ctm, packId, packPriority);
+			return new ParseResult(definition, definition == null);
 		} catch (JsonParseException | IOException e) {
 			ContinuityClient.LOGGER.error("Failed to parse CTM metadata of texture '" + baseTextureId + "' in pack '" + packId + "'", e);
-			return null;
+			return new ParseResult(null, true);
 		}
+	}
+
+	public record ParseResult(@Nullable CtmDefinition definition, boolean invalid) {
 	}
 
 	@Nullable
@@ -68,7 +79,7 @@ public final class CtmMcmetaParser {
 		try (InputStreamReader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
 			return JsonParser.parseReader(reader).getAsJsonObject();
 		} catch (IllegalStateException | JsonParseException e) {
-			ContinuityClient.LOGGER.debug("Invalid mcmeta for resource '" + resource.getResourceLocation() + "'", e);
+			ContinuityClient.LOGGER.warn("Invalid mcmeta for resource '" + resource.getResourceLocation() + "'", e);
 			return null;
 		}
 	}
@@ -146,10 +157,15 @@ public final class CtmMcmetaParser {
 			properties.extraData = extra;
 			properties.ignoreStates = JsonUtils.getBoolean(extra, "ignore_states", false);
 			properties.useActualState = JsonUtils.getBoolean(extra, "use_actual_state", false);
+			properties.emissiveFallback = baseTextureId.getPath().endsWith("_e")
+					&& JsonUtils.getBoolean(extra, "emissive_fallback", false);
 			if (extra.has("connect_inside")) {
 				properties.connectInside = JsonUtils.getBoolean(extra, "connect_inside", false);
 			}
 			properties.connectToDefined = extra.has("connect_to");
+			if (properties.connectToDefined) {
+				properties.connectToBlocks = parseConnectTo(extra.get("connect_to"), baseTextureId);
+			}
 			parseLight(properties, extra);
 			parseMap(properties, extra);
 		}
@@ -174,6 +190,27 @@ public final class CtmMcmetaParser {
 			properties.blocklight = parseLightValue(lightObj.get("block"));
 			properties.skylight = parseLightValue(lightObj.get("sky"));
 		}
+	}
+
+	private static Set<ResourceLocation> parseConnectTo(JsonElement value, ResourceLocation textureId) {
+		Set<ResourceLocation> blocks = new ObjectOpenHashSet<>();
+		if (value == null || !value.isJsonArray()) {
+			ContinuityClient.LOGGER.warn("Invalid connect_to in CTM metadata of '{}' (expected an array)", textureId);
+			return blocks;
+		}
+		for (JsonElement element : value.getAsJsonArray()) {
+			if (!element.isJsonObject()) {
+				ContinuityClient.LOGGER.warn("Invalid connect_to entry in CTM metadata of '{}'", textureId);
+				continue;
+			}
+			JsonElement block = element.getAsJsonObject().get("block");
+			if (block == null || !block.isJsonPrimitive() || !block.getAsJsonPrimitive().isString()) {
+				ContinuityClient.LOGGER.warn("Unsupported connect_to entry in CTM metadata of '{}'", textureId);
+				continue;
+			}
+			blocks.add(new ResourceLocation(block.getAsString()));
+		}
+		return blocks;
 	}
 
 	private static void parseMap(CtmDefinition properties, JsonObject extra) {

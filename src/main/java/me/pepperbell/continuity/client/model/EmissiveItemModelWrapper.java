@@ -2,12 +2,18 @@ package me.pepperbell.continuity.client.model;
 
 import java.util.List;
 
+import javax.vecmath.Matrix4f;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.pepperbell.continuity.api.client.EmissiveSpriteApi;
+import me.pepperbell.continuity.client.config.ContinuityConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
@@ -23,6 +29,9 @@ public class EmissiveItemModelWrapper extends BakedModelWrapper<IBakedModel> {
 	@Override
 	public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 		List<BakedQuad> quads = super.getQuads(state, side, rand);
+		if (!ContinuityConfig.INSTANCE.emissiveTextures.get()) {
+			return quads;
+		}
 		ObjectArrayList<BakedQuad> output = new ObjectArrayList<>(quads);
 		for (BakedQuad quad : quads) {
 			TextureAtlasSprite sprite = quad.getSprite();
@@ -31,7 +40,15 @@ public class EmissiveItemModelWrapper extends BakedModelWrapper<IBakedModel> {
 			}
 			TextureAtlasSprite emissiveSprite = EmissiveSpriteApi.get().getEmissiveSprite(sprite);
 			if (emissiveSprite != null) {
-				output.add(new EmissiveBakedQuad(quad, emissiveSprite));
+				BakedQuad overlay = new EmissiveBakedQuad(quad, emissiveSprite);
+				// Item rendering uses Forge's per-quad UV1 lightmap only for non-ITEM formats.
+				// Block overlays are rebuilt by the chunk transformer after CTM processing.
+				if (state == null) {
+					overlay = BakedQuadLightmap.withMinimum(overlay, 15, 15);
+					overlay = new BakedQuad(overlay.getVertexData(), overlay.getTintIndex(),
+							overlay.getFace(), overlay.getSprite(), false, overlay.getFormat());
+				}
+				output.add(overlay);
 			}
 		}
 		return output;
@@ -50,6 +67,15 @@ public class EmissiveItemModelWrapper extends BakedModelWrapper<IBakedModel> {
 			return original;
 		}
 		return new UnwrappingItemOverrideList(original);
+	}
+
+	@Override
+	public Pair<? extends IBakedModel, Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType) {
+		Pair<? extends IBakedModel, Matrix4f> perspective = super.handlePerspective(transformType);
+		// Forge renders the model returned here. Keep the emissive wrapper when the delegate
+		// merely applies a camera transform to itself.
+		return perspective.getLeft() == originalModel
+				? Pair.of(this, perspective.getRight()) : perspective;
 	}
 
 	private static class UnwrappingItemOverrideList extends ItemOverrideList {

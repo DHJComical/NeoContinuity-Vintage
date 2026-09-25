@@ -7,6 +7,7 @@ import java.util.function.Function;
 import me.pepperbell.continuity.client.ctm.CtmDefinition;
 import me.pepperbell.continuity.client.ctm.CtmMcmetaLoader;
 import me.pepperbell.continuity.client.ctm.CtmModLoader;
+import me.pepperbell.continuity.client.ctm.CtmRenderLayerRouter;
 import me.pepperbell.continuity.client.config.ContinuityConfig;
 import me.pepperbell.continuity.impl.client.EmissiveSpriteApiImpl;
 import me.pepperbell.continuity.client.ContinuityClient;
@@ -23,6 +24,7 @@ public class ContinuityTextureEvents {
 
 	@SubscribeEvent
 	public void onTextureStitchPre(TextureStitchEvent.Pre event) {
+		CtmRenderLayerRouter.reload(List.of());
 		EmissiveSuffixLoader.load(Minecraft.getMinecraft().getResourceManager());
 		EmissiveSpriteApiImpl.INSTANCE.clear();
 		lastResult = CtmPropertiesLoader.loadAll();
@@ -37,8 +39,14 @@ public class ContinuityTextureEvents {
 		// loaded from textures/<path>.png, so the vanilla registerSprite path is used.
 		if (ContinuityConfig.INSTANCE.ctmModTextures.get()) {
 			List<CtmDefinition> ctmDefinitions = CtmMcmetaLoader.loadAll();
+			String emissiveSuffix = EmissiveSuffixLoader.getEmissiveSuffix();
 			for (CtmDefinition definition : ctmDefinitions) {
 				for (ResourceLocation spriteId : definition.getSpriteDependencies()) {
+					if (emissiveSuffix != null && !emissiveSuffix.isEmpty()
+							&& spriteId.getPath().endsWith(emissiveSuffix)
+							&& !EmissiveSuffixLoader.hasTexture(Minecraft.getMinecraft().getResourceManager(), spriteId)) {
+						continue;
+					}
 					// registerSprite is idempotent for already-registered sprites
 					textureMap.registerSprite(spriteId);
 				}
@@ -56,11 +64,21 @@ public class ContinuityTextureEvents {
 		Function<ResourceLocation, TextureAtlasSprite> spriteGetter = id -> textureMap.getAtlasSprite(id.toString());
 		List<QuadProcessors.ProcessorHolder> processorHolders = lastResult.createProcessorHolders(spriteGetter);
 		ContinuityClient.LOGGER.debug("Reloaded {} CTM processor holders", processorHolders.size());
+		int bloomDefinitions = 0;
+		int ctmDefinitionsLoaded = 0;
+		List<CtmDefinition> ctmDefinitions = List.of();
 
 		// CTM Mod format definitions (texture-mcmeta driven)
 		if (ContinuityConfig.INSTANCE.ctmModTextures.get()) {
-			List<CtmDefinition> ctmDefinitions = CtmMcmetaLoader.loadAll();
+			ctmDefinitions = CtmMcmetaLoader.loadAll();
+			ctmDefinitionsLoaded = ctmDefinitions.size();
+			CtmRenderLayerRouter.reload(ctmDefinitions);
 			for (CtmDefinition definition : ctmDefinitions) {
+				TextureAtlasSprite stitched = textureMap.mapUploadedSprites.get(definition.getResourceId().toString());
+				if (definition.getLayer() != null && definition.getLayer().name().equals("BLOOM")
+						&& stitched != null && stitched != textureMap.getMissingSprite()) {
+					bloomDefinitions++;
+				}
 				CtmModLoader loader = new CtmModLoader(definition);
 				QuadProcessors.ProcessorHolder holder = new QuadProcessors.ProcessorHolder(
 						loader.getProcessorFactory().createProcessor(definition, spriteGetter),
@@ -72,17 +90,24 @@ public class ContinuityTextureEvents {
 
 		QuadProcessors.reload(processorHolders);
 		String suffix = EmissiveSuffixLoader.getEmissiveSuffix();
+		int emissivePairs = 0;
 		if (suffix != null && !suffix.isEmpty()) {
 			for (Map.Entry<String, TextureAtlasSprite> entry : textureMap.mapUploadedSprites.entrySet()) {
-				if (entry.getKey().endsWith(suffix)) {
+				if (entry.getKey().endsWith(suffix) && entry.getValue() != textureMap.getMissingSprite()) {
 					String baseKey = entry.getKey().substring(0, entry.getKey().length() - suffix.length());
 					TextureAtlasSprite base = textureMap.mapUploadedSprites.get(baseKey);
-					if (base != null) {
+					if (base != null && base != textureMap.getMissingSprite()) {
 						EmissiveSpriteApiImpl.INSTANCE.setEmissiveSprite(base, entry.getValue());
+						emissivePairs++;
 					}
 				}
 			}
 		}
+		CtmMcmetaLoader.Diagnostics diagnostics = CtmMcmetaLoader.getLastDiagnostics();
+		ContinuityClient.LOGGER.info("CTM reload: {} definitions, {} stitched BLOOM definitions, {} emissive sprite pairs, {} invalid metadata files, {} unresolved resources",
+				ctmDefinitionsLoaded, bloomDefinitions, emissivePairs,
+				ContinuityConfig.INSTANCE.ctmModTextures.get() ? diagnostics.invalidMetadata() : 0,
+				ContinuityConfig.INSTANCE.ctmModTextures.get() ? diagnostics.unresolvedResources() : 0);
 		lastResult = null;
 	}
 }

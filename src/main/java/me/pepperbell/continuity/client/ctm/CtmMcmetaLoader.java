@@ -7,6 +7,8 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -22,16 +24,22 @@ import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.ResourcePackRepository;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.Loader;
 
 /**
- * Scans resource packs for CTM Mod format metadata: every {@code assets/<ns>/<path>.png.mcmeta}
- * whose mcmeta has a {@code "ctm"} section becomes a {@link CtmDefinition}.
+ * Scans resource packs for CTM Mod format metadata. Pack files use
+ * {@code assets/<ns>/<path>.png.mcmeta}; B.A.S.E and Resource Loader also expose
+ * {@code resources/<ns>/<path>.png.mcmeta} (and Resource Loader's {@code oresources}).
+ * Metadata with a {@code "ctm"} section becomes a {@link CtmDefinition}.
  * <p>
  * Runs alongside (and independently of) the OptiFine {@code optifine/ctm/*.properties} loader.
  */
 public final class CtmMcmetaLoader {
+	private static volatile Diagnostics lastDiagnostics = new Diagnostics(0, 0);
 	private final IResourceManager resourceManager;
 	private final List<CtmDefinition> properties = new ObjectArrayList<>();
+	private final Set<ResourceLocation> invalidMetadata = new HashSet<>();
+	private final Set<ResourceLocation> unresolvedResources = new HashSet<>();
 
 	private CtmMcmetaLoader(IResourceManager resourceManager) {
 		this.resourceManager = resourceManager;
@@ -44,15 +52,26 @@ public final class CtmMcmetaLoader {
 		CtmMcmetaLoader loader = new CtmMcmetaLoader(Minecraft.getMinecraft().getResourceManager());
 		loader.loadAllPacks();
 		loader.properties.sort(null);
+		lastDiagnostics = new Diagnostics(loader.invalidMetadata.size(), loader.unresolvedResources.size());
 		return loader.properties;
+	}
+
+	public static Diagnostics getLastDiagnostics() {
+		return lastDiagnostics;
+	}
+
+	public record Diagnostics(int invalidMetadata, int unresolvedResources) {
 	}
 
 	private void loadAllPacks() {
 		int packPriority = 0;
 		Set<String> seenPacks = new HashSet<>();
+		Set<Path> scannedDirectories = new HashSet<>();
+		int externalPackCount = 0;
 
 		for (IResourcePack pack : FMLClientHandler.instance().getResourcePackList()) {
 			if (seenPacks.add(pack.getPackName())) {
+				rememberDirectory(pack, scannedDirectories);
 				loadAll(pack, packPriority++);
 			}
 		}
@@ -60,21 +79,40 @@ public final class CtmMcmetaLoader {
 		ResourcePackRepository repository = Minecraft.getMinecraft().getResourcePackRepository();
 		for (ResourcePackRepository.Entry entry : repository.getRepositoryEntries()) {
 			if (seenPacks.add(entry.getResourcePackName())) {
+				rememberDirectory(entry.getResourcePack(), scannedDirectories);
 				loadAll(entry.getResourcePack(), packPriority++);
 			}
 		}
 
 		IResourcePack serverPack = repository.getServerResourcePack();
 		if (serverPack != null && seenPacks.add(serverPack.getPackName())) {
+			rememberDirectory(serverPack, scannedDirectories);
 			loadAll(serverPack, packPriority++);
 		}
 
-		ContinuityClient.LOGGER.debug("Loaded {} CTM Mod metadata definitions from {} packs", properties.size(), seenPacks.size());
+		// B.A.S.E and Resource Loader expose namespace folders directly under these roots.
+		// They may be inserted into Minecraft's default pack list rather than the lists above.
+		boolean resourceLoaderPresent = Loader.isModLoaded("resourceloader");
+		if (Loader.isModLoaded("base") || resourceLoaderPresent) {
+			Path gameDir = Loader.instance().getConfigDir().getParentFile().toPath();
+			for (Path root : externalRoots(gameDir, scannedDirectories, resourceLoaderPresent)) {
+				String folder = root.getFileName().toString();
+				loadAll(folder, folder.equals("resources") ? -1 : packPriority++,
+						consumer -> scanDirectory(root, consumer));
+				externalPackCount++;
+			}
+		}
+
+		ContinuityClient.LOGGER.debug("Loaded {} CTM Mod metadata definitions from {} packs", properties.size(), seenPacks.size() + externalPackCount);
 	}
 
 	private void loadAll(IResourcePack pack, int packPriority) {
+		loadAll(pack.getPackName(), packPriority, consumer -> scanPack(pack, consumer));
+	}
+
+	private void loadAll(String packName, int packPriority, Consumer<BiConsumer<String, String>> scanner) {
 		int[] count = new int[1];
-		scanPack(pack, (namespace, path) -> {
+		scanner.accept((namespace, path) -> {
 			if (!path.endsWith(".mcmeta") || !path.contains("/")) {
 				return;
 			}
@@ -88,9 +126,14 @@ public final class CtmMcmetaLoader {
 					? texturePath.substring("textures/".length(), texturePath.length() - ".png".length())
 					: texturePath.substring(0, texturePath.length() - ".png".length());
 			ResourceLocation baseTextureId = new ResourceLocation(namespace, spriteIdPath);
+			ResourceLocation metadataId = new ResourceLocation(namespace, texturePath + ".mcmeta");
 				try {
-					IResource resource = resourceManager.getResource(new ResourceLocation(namespace, texturePath + ".mcmeta"));
-					CtmDefinition parsed = CtmMcmetaParser.parse(baseTextureId, resource, pack.getPackName(), packPriority);
+					IResource resource = resourceManager.getResource(metadataId);
+					CtmMcmetaParser.ParseResult result = CtmMcmetaParser.parseDetailed(baseTextureId, resource, packName, packPriority);
+					if (result.invalid()) {
+						invalidMetadata.add(metadataId);
+					}
+					CtmDefinition parsed = result.definition();
 					if (parsed != null) {
 						// Proxy: the proxy target's definition replaces this one (the base texture
 						// behaves as the proxied texture).
@@ -99,12 +142,13 @@ public final class CtmMcmetaLoader {
 							String proxyPath = "textures/" + proxyId.getPath() + ".png.mcmeta";
 							try {
 								IResource proxyResource = resourceManager.getResource(new ResourceLocation(proxyId.getNamespace(), proxyPath));
-								CtmDefinition proxyDef = CtmMcmetaParser.parse(parsed.getResourceId(), proxyResource, pack.getPackName(), packPriority);
+								CtmDefinition proxyDef = CtmMcmetaParser.parse(parsed.getResourceId(), proxyResource, packName, packPriority);
 								if (proxyDef != null) {
 									CtmMcmetaParser.overrideBaseTexture(proxyDef, proxyId);
 									parsed = proxyDef;
 								}
 							} catch (Exception e) {
+								unresolvedResources.add(new ResourceLocation(proxyId.getNamespace(), proxyPath));
 								ContinuityClient.LOGGER.warn("Failed to resolve CTM proxy '" + parsed.getProxy() + "' for '" + baseTextureId + "'", e);
 							}
 						}
@@ -112,13 +156,20 @@ public final class CtmMcmetaLoader {
 						count[0]++;
 					}
 				} catch (Exception e) {
-					ContinuityClient.LOGGER.error("Failed to load CTM metadata from '" + namespace + ":" + texturePath + "' in pack '" + pack.getPackName() + "'", e);
+					unresolvedResources.add(metadataId);
+					ContinuityClient.LOGGER.error("Failed to load CTM metadata from '" + namespace + ":" + texturePath + "' in pack '" + packName + "'", e);
 				}
 		});
-		ContinuityClient.LOGGER.debug("Loaded {} CTM Mod definitions in pack '{}'", count[0], pack.getPackName());
+		ContinuityClient.LOGGER.debug("Loaded {} CTM Mod definitions in pack '{}'", count[0], packName);
 	}
 
-	private static void scanPack(IResourcePack pack, ScanConsumer consumer) {
+	private static void rememberDirectory(IResourcePack pack, Set<Path> scannedDirectories) {
+		if (pack instanceof AbstractResourcePack abstractPack && abstractPack.getResourcePackFile().isDirectory()) {
+			scannedDirectories.add(abstractPack.getResourcePackFile().toPath().toAbsolutePath().normalize());
+		}
+	}
+
+	private static void scanPack(IResourcePack pack, BiConsumer<String, String> consumer) {
 		if (!(pack instanceof AbstractResourcePack abstractPack)) {
 			ContinuityClient.LOGGER.debug("Skipping non-abstract resource pack '{}' while scanning CTM Mod metadata", pack.getPackName());
 			return;
@@ -132,11 +183,12 @@ public final class CtmMcmetaLoader {
 		}
 	}
 
-	private static void scanDirectory(Path root, ScanConsumer consumer) {
+	static void scanDirectory(Path root, BiConsumer<String, String> consumer) {
+		boolean namespaceRoot = isExternalResourceRoot(root);
 		try (var stream = Files.walk(root)) {
 			stream.filter(Files::isRegularFile).forEach(path -> {
 				String relative = root.relativize(path).toString().replace('\\', '/');
-				ResourcePackPath resourcePath = parseResourcePackPath(relative);
+				ResourcePackPath resourcePath = parseResourcePackPath(relative, namespaceRoot);
 				if (resourcePath != null) {
 					consumer.accept(resourcePath.namespace(), resourcePath.path());
 				}
@@ -146,7 +198,24 @@ public final class CtmMcmetaLoader {
 		}
 	}
 
-	private static void scanZip(File file, ScanConsumer consumer) {
+	static List<Path> externalRoots(Path gameDir, Set<Path> scannedDirectories, boolean includeOverriding) {
+		List<Path> roots = new ObjectArrayList<>();
+		List<String> folders = includeOverriding ? List.of("resources", "oresources") : List.of("resources");
+		for (String folder : folders) {
+			Path root = gameDir.resolve(folder);
+			if (Files.isDirectory(root) && !scannedDirectories.contains(root.toAbsolutePath().normalize())) {
+				roots.add(root);
+			}
+		}
+		return roots;
+	}
+
+	private static boolean isExternalResourceRoot(Path root) {
+		Path name = root.getFileName();
+		return name != null && (name.toString().equals("resources") || name.toString().equals("oresources"));
+	}
+
+	private static void scanZip(File file, BiConsumer<String, String> consumer) {
 		try (ZipFile zipFile = new ZipFile(file)) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while (entries.hasMoreElements()) {
@@ -154,7 +223,7 @@ public final class CtmMcmetaLoader {
 				if (entry.isDirectory()) {
 					continue;
 				}
-				ResourcePackPath resourcePath = parseResourcePackPath(entry.getName());
+				ResourcePackPath resourcePath = parseResourcePackPath(entry.getName(), false);
 				if (resourcePath != null) {
 					consumer.accept(resourcePath.namespace(), resourcePath.path());
 				}
@@ -165,11 +234,11 @@ public final class CtmMcmetaLoader {
 	}
 
 	@Nullable
-	private static ResourcePackPath parseResourcePackPath(String relative) {
-		if (!relative.startsWith("assets/")) {
+	private static ResourcePackPath parseResourcePackPath(String relative, boolean namespaceRoot) {
+		if (!relative.startsWith("assets/") && !namespaceRoot) {
 			return null;
 		}
-		String rest = relative.substring("assets/".length());
+		String rest = namespaceRoot ? relative : relative.substring("assets/".length());
 		int slash = rest.indexOf('/');
 		if (slash <= 0 || slash >= rest.length() - 1) {
 			return null;
@@ -184,10 +253,5 @@ public final class CtmMcmetaLoader {
 	}
 
 	private record ResourcePackPath(String namespace, String path) {
-	}
-
-	@FunctionalInterface
-	private interface ScanConsumer {
-		void accept(String namespace, String path);
 	}
 }

@@ -1,6 +1,7 @@
 package me.pepperbell.continuity.client.mixin;
 
 import me.pepperbell.continuity.client.resource.EmissiveSuffixLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
@@ -18,6 +19,8 @@ public abstract class TextureMapMixin {
 			return;
 		}
 		ResourceLocation emissiveLocation = new ResourceLocation(location.getNamespace(), location.getPath() + suffix);
-		((TextureMap) (Object) this).registerSprite(emissiveLocation);
+		if (EmissiveSuffixLoader.hasTexture(Minecraft.getMinecraft().getResourceManager(), emissiveLocation)) {
+			((TextureMap) (Object) this).registerSprite(emissiveLocation);
+		}
 	}
 }
