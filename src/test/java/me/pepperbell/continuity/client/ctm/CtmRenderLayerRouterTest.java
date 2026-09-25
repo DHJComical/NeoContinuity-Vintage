@@ -26,7 +26,8 @@ class CtmRenderLayerRouterTest {
 			assertFalse(CtmRenderLayerRouter.shouldRender(ordinary, BlockRenderLayer.CUTOUT, true));
 			assertFalse(CtmRenderLayerRouter.shouldProcessWrappedOverlay(glow, BlockRenderLayer.SOLID, false));
 			assertTrue(CtmRenderLayerRouter.shouldProcessWrappedOverlay(glow, BlockRenderLayer.CUTOUT, true));
-			assertFalse(CtmRenderLayerRouter.shouldProcessWrappedOverlay(ordinary, BlockRenderLayer.SOLID, false));
+			assertTrue(CtmRenderLayerRouter.shouldProcessWrappedOverlay(ordinary, BlockRenderLayer.SOLID, false));
+			assertFalse(CtmRenderLayerRouter.shouldProcessWrappedOverlay(ordinary, BlockRenderLayer.CUTOUT, true));
 			assertFalse(CtmRenderLayerRouter.shouldGenerateSuffixOverlay(glow));
 			assertTrue(CtmRenderLayerRouter.shouldGenerateSuffixOverlay(ordinary));
 		} finally {

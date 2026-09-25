@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import me.pepperbell.continuity.client.ContinuityClient;
 import me.pepperbell.continuity.client.config.ContinuityConfig;
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -54,14 +53,14 @@ public final class CtmRenderLayerRouter {
 		}
 		boolean modelHasLayer = modelLayers.computeIfAbsent(state, CtmRenderLayerRouter::findModelLayers).contains(layer);
 		if (modelHasLayer) {
-			forcedLayers.add(new BlockLayer(state.getBlock(), layer));
+			forcedLayers.add(new BlockLayer(state, layer));
 			return true;
 		}
 		return false;
 	}
 
 	public static boolean isRoutedLayer(IBlockState state, BlockRenderLayer layer) {
-		return forcedLayers.contains(new BlockLayer(state.getBlock(), layer));
+		return forcedLayers.contains(new BlockLayer(state, layer));
 	}
 
 	public static boolean shouldRender(TextureAtlasSprite sprite, BlockRenderLayer layer, boolean routedLayer) {
@@ -71,8 +70,7 @@ public final class CtmRenderLayerRouter {
 
 	public static boolean shouldProcessWrappedOverlay(TextureAtlasSprite sprite, BlockRenderLayer layer,
 			boolean routedLayer) {
-		return sprite != null && snapshot.spriteLayers().containsKey(sprite.getIconName())
-				&& shouldRender(sprite, layer, routedLayer);
+		return shouldRender(sprite, layer, routedLayer);
 	}
 
 	public static boolean shouldGenerateSuffixOverlay(TextureAtlasSprite sprite) {
@@ -118,7 +116,7 @@ public final class CtmRenderLayerRouter {
 		}
 	}
 
-	private record BlockLayer(Block block, BlockRenderLayer layer) {
+	private record BlockLayer(IBlockState state, BlockRenderLayer layer) {
 	}
 
 	private record LayerRule(BlockRenderLayer layer, boolean emissiveFallback) {

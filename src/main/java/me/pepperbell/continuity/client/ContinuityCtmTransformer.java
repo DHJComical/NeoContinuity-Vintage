@@ -44,8 +44,8 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 		if (!ContinuityConfig.INSTANCE.connectedTextures.get()) {
 			for (BakedQuad quad : quads) {
 				if (quad instanceof EmissiveBakedQuad
-						&& (!routeCtmLayers || !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
-								quad.getSprite(), layer, routedLayer))) {
+						&& routeCtmLayers && !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
+								quad.getSprite(), layer, routedLayer)) {
 					continue;
 				}
 				if (!routeCtmLayers || CtmRenderLayerRouter.shouldRender(quad.getSprite(), layer, routedLayer)) {
@@ -58,8 +58,8 @@ public class ContinuityCtmTransformer implements BlockQuadTransformer {
 
 			for (BakedQuad quad : quads) {
 				if (quad instanceof EmissiveBakedQuad
-						&& (!routeCtmLayers || !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
-								quad.getSprite(), layer, routedLayer))) {
+						&& routeCtmLayers && !CtmRenderLayerRouter.shouldProcessWrappedOverlay(
+								quad.getSprite(), layer, routedLayer)) {
 					continue;
 				}
 				if (!routeCtmLayers || CtmRenderLayerRouter.shouldRender(quad.getSprite(), layer, routedLayer)) {
